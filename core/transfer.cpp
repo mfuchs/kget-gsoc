@@ -31,6 +31,11 @@ Transfer::Transfer(TransferGroup * parent, TransferFactory * factory,
         load( *e );
 }
 
+Transfer::~Transfer()
+{
+    delete(m_handler);
+}
+
 TransferHandler * Transfer::handler()
 {
     if(!m_handler)
