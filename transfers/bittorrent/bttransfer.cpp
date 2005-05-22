@@ -80,7 +80,11 @@ bool BTTransfer::isResumable() const
 void BTTransfer::start()
 {
     startTime = QTime::currentTime();
+    m_statusText = i18n("Connecting..");
+    m_statusPixmap = SmallIcon("connect_creating");
     setStatus(Job::Running);
+    setTransferChange(Tc_Status, true);
+
     resume();
 }
 
@@ -94,6 +98,8 @@ void BTTransfer::stop()
         download.hash_save();
         m_statusText = i18n("Stopped");
         m_statusPixmap = SmallIcon("stop");
+        m_speed = 0;
+        setTransferChange(Tc_Speed);
         setTransferChange(Tc_Status, true);
         setStatus(Job::Stopped);
 
@@ -175,9 +181,6 @@ void BTTransfer::resume()
         // the line below only compiles with exceptions activated
         // kdDebug() << "Resume exception " << e.what() << endl << endl;
         }
-        m_statusText = i18n("Connecting..");
-        m_statusPixmap = SmallIcon("connect_creating");
-        setTransferChange(Tc_Status, true);
         timer.start(1 * 1000);
         return;
     }
