@@ -40,12 +40,17 @@
 
 #include <qclipboard.h>
 #include <qregexp.h>
-#include <qdragobject.h>
-#include <qwhatsthis.h>
+#include <q3dragobject.h>
+#include <q3whatsthis.h>
 #include <qtooltip.h>
 #include <qtimer.h>
-#include <qdropsite.h>
-#include <qpopupmenu.h>
+#include <q3dropsite.h>
+#include <q3popupmenu.h>
+//Added by qt3to4:
+#include <QDropEvent>
+#include <Q3ValueList>
+#include <QDragEnterEvent>
+#include <QCustomEvent>
 #include <kinputdialog.h>
 
 #include <kprotocolinfo.h>
@@ -84,7 +89,7 @@
 
 #include <kio/authinfo.h>
 #include <kio/global.h>
-#include <qiconset.h>
+#include <qicon.h>
 
 #include "version.h"
 #include "slave.h"
@@ -792,12 +797,12 @@ void KMainWidget::slotDeleteCurrent()
     m_paPause->setEnabled(false);
     update();
     TransferIterator it(myTransferList);
-    QValueList<QGuardedPtr<Transfer> > selectedItems;
+    Q3ValueList<QPointer<Transfer> > selectedItems;
     QStringList itemNames;
 
     while (it.current()) {
         if (it.current()->isSelected()) {
-            selectedItems.append( QGuardedPtr<Transfer>( it.current() ));
+            selectedItems.append( QPointer<Transfer>( it.current() ));
             itemNames.append( it.current()->getSrc().prettyURL() );
         }
         ++it;
@@ -829,7 +834,7 @@ void KMainWidget::slotDeleteCurrent()
     // we used a QGuardedPtr :)
 
     int transferFinishedMeanwhile = 0;
-    QValueListConstIterator<QGuardedPtr<Transfer> > lit = selectedItems.begin();;
+    Q3ValueListConstIterator<QPointer<Transfer> > lit = selectedItems.begin();;
     while ( lit != selectedItems.end() )
     {
         if ( *lit )
@@ -1489,7 +1494,7 @@ void KMainWidget::dragEnterEvent(QDragEnterEvent * event)
     //sDebugIn << endl;
 #endif
 
-    event->accept(KURLDrag::canDecode(event) || QTextDrag::canDecode(event));
+    event->accept(KURLDrag::canDecode(event) || Q3TextDrag::canDecode(event));
 
 #ifdef _DEBUG
     sDebugOut << endl;
@@ -1508,7 +1513,7 @@ void KMainWidget::dropEvent(QDropEvent * event)
 
     if (KURLDrag::decode(event, list)) {
         addTransfers(list);
-    } else if (QTextDrag::decode(event, str)) {
+    } else if (Q3TextDrag::decode(event, str)) {
         addTransfer(str);
     }
     sDebugOut << endl;
@@ -1886,7 +1891,7 @@ void KMainWidget::slotPopupMenu(Transfer * item)
 
     // popup transfer menu at the position
     QWidget *menu = guiFactory()->container("transfer",this);
-    ((QPopupMenu *) menu)->popup(QCursor::pos());
+    ((Q3PopupMenu *) menu)->popup(QCursor::pos());
 
 
 #ifdef _DEBUG

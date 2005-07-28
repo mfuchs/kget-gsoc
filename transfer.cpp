@@ -23,7 +23,9 @@
  *
  ***************************************************************************/
 
-#include <qheader.h>
+#include <q3header.h>
+//Added by qt3to4:
+#include <QPixmap>
 
 #include <kurl.h>
 #include <kmessagebox.h>
@@ -72,7 +74,7 @@ Transfer::Transfer(TransferList * _view, const KURL & _src, const KURL & _dest, 
 
 Transfer::Transfer(TransferList * _view, Transfer * after, const KURL & _src, const KURL & _dest, const uint _id)
     : QObject( _view ),
-      KListViewItem(_view, (QListViewItem *) after),
+      KListViewItem(_view, (Q3ListViewItem *) after),
       src(_src), dest(_dest), view(_view),
       dlgIndividual( 0 )
 {
@@ -346,7 +348,7 @@ bool Transfer::updateStatus(int counter)
         int w = rect.width();
         int h = rect.height();
 
-        view->QScrollView::updateContents(x,y,w,h);
+        view->Q3ScrollView::updateContents(x,y,w,h);
 
         prevStatus = status;
        prevMode = mode;

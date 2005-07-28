@@ -14,6 +14,8 @@
 
 #include <qapplication.h>
 #include <qstring.h>
+//Added by qt3to4:
+#include <Q3CString>
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
@@ -29,7 +31,7 @@
 //-----------------------------------------------------------------------------
 QString kFileToString(const QString & aFileName, bool aEnsureNL, bool aVerbose)
 {
-    QCString result;
+    Q3CString result;
 
     QFileInfo info(aFileName);
     unsigned int readLen;
@@ -37,7 +39,7 @@ QString kFileToString(const QString & aFileName, bool aEnsureNL, bool aVerbose)
     QFile file(aFileName);
 
     // assert(aFileName!=NULL);
-    if (aFileName == NULL)
+    if (aFileName.isEmpty())
         return "";
 
     if (!info.exists()) {
@@ -58,7 +60,7 @@ QString kFileToString(const QString & aFileName, bool aEnsureNL, bool aVerbose)
     if (len <= 0)
         return QString::null;
 
-    if (!file.open(IO_Raw | IO_ReadOnly)) {
+    if (!file.open(IO_Raw | QIODevice::ReadOnly)) {
         if (aVerbose)
             switch (file.status()) {
             case IO_ReadError:
@@ -131,7 +133,7 @@ static bool kBytesToFile(const char *aBuffer, int len, const QString & aFileName
         }
     }
 
-    if (!file.open(IO_Raw | IO_WriteOnly)) {
+    if (!file.open(IO_Raw | QIODevice::WriteOnly)) {
         if (aVerbose)
             switch (file.status()) {
             case IO_WriteError:
@@ -163,7 +165,7 @@ static bool kBytesToFile(const char *aBuffer, int len, const QString & aFileName
     return TRUE;
 }
 
-bool kCStringToFile(const QCString & aBuffer, const QString & aFileName, bool aAskIfExists, bool aBackup, bool aVerbose)
+bool kCStringToFile(const Q3CString & aBuffer, const QString & aFileName, bool aAskIfExists, bool aBackup, bool aVerbose)
 {
     return kBytesToFile(aBuffer, aBuffer.length(), aFileName, aAskIfExists, aBackup, aVerbose);
 }

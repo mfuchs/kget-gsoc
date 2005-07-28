@@ -25,6 +25,10 @@
  ***************************************************************************/
 
 #include <qtooltip.h>
+//Added by qt3to4:
+#include <QDragEnterEvent>
+#include <QMouseEvent>
+#include <QDropEvent>
 
 #include <kaboutdata.h>
 #include <kapplication.h>
@@ -42,7 +46,7 @@ DockWidget::DockWidget(KMainWidget * _parent):KSystemTray(_parent)
 {
     parent = _parent;
 
-    setPixmap( loadIcon( "kget_dock" ));
+    setPixmap( loadIcon( "dock" ));
 
     // popup menu for right mouse button
     KPopupMenu *popupMenu = contextMenu();
@@ -70,7 +74,7 @@ DockWidget::~DockWidget()
 void DockWidget::dragEnterEvent(QDragEnterEvent * event)
 {
     event->accept(KURLDrag::canDecode(event)
-                  || QTextDrag::canDecode(event));
+                  || Q3TextDrag::canDecode(event));
 }
 
 
@@ -81,7 +85,7 @@ void DockWidget::dropEvent(QDropEvent * event)
 
     if (KURLDrag::decode(event, list)) {
         parent->addTransfers(list);
-    } else if (QTextDrag::decode(event, str)) {
+    } else if (Q3TextDrag::decode(event, str)) {
         parent->addTransfer(str);
     }
 }
@@ -89,7 +93,7 @@ void DockWidget::dropEvent(QDropEvent * event)
 
 void DockWidget::mousePressEvent(QMouseEvent * e)
 {
-    if (e->button() == MidButton) {
+    if (e->button() == Qt::MidButton) {
         parent->slotPasteTransfer();
     } else {
         KSystemTray::mousePressEvent(e);

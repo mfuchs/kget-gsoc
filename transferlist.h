@@ -28,27 +28,29 @@
 #define _TransferList_h
 
 #include <klistview.h>
-#include <qptrlist.h>
+#include <q3ptrlist.h>
+//Added by qt3to4:
+#include <QPixmap>
 
 #include <kurl.h>
 
 class Transfer;
 
-class TransferIterator:public QListViewItemIterator
+class TransferIterator:public Q3ListViewItemIterator
 {
 
 public:
 
-    TransferIterator(QListView * view):QListViewItemIterator(view)
+    TransferIterator(Q3ListView * view):Q3ListViewItemIterator(view)
     {
     }
     Transfer *current() const
     {
-        return (Transfer *) QListViewItemIterator::current();
+        return (Transfer *) Q3ListViewItemIterator::current();
     }
     void reset()
     {
-        curr = listView->firstChild();
+        setCurrentItem(listView()->firstChild());
     }
 
 };
@@ -65,7 +67,7 @@ Q_OBJECT public:
     Transfer *addTransfer(const KURL & _source, const KURL & _dest,
                           bool canShow = true );
 
-    virtual void setSelected(QListViewItem * item, bool selected);
+    virtual void setSelected(Q3ListViewItem * item, bool selected);
 
     void moveToBegin(Transfer * item);
     void moveToEnd(Transfer * item);
@@ -88,8 +90,8 @@ signals:
     void popupMenu(Transfer * item);
 
 protected slots:
-    void slotTransferSelected(QListViewItem * item);
-    void slotPopupMenu(QListViewItem * item);
+    void slotTransferSelected(Q3ListViewItem * item);
+    void slotPopupMenu(Q3ListViewItem * item);
 
 protected:
 
@@ -100,8 +102,8 @@ protected:
     int lv_pixmap, lv_filename, lv_resume, lv_count, lv_progress;
     int lv_total, lv_speed, lv_remaining, lv_url;
 
-    QPtrList < QPixmap > animConn;
-    QPtrList < QPixmap > animTry;
+    Q3PtrList < QPixmap > animConn;
+    Q3PtrList < QPixmap > animTry;
     QPixmap pixQueued;
     QPixmap pixScheduled;
     QPixmap pixDelayed;

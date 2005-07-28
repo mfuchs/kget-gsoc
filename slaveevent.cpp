@@ -25,6 +25,8 @@
 
 
 #include "slaveevent.h"
+//Added by qt3to4:
+#include <QCustomEvent>
 
 #define EVENT_TYPE (QEvent::User + 252)
 

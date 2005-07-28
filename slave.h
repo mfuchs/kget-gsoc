@@ -29,7 +29,7 @@
 
 #include <qthread.h>
 #include <kurl.h>
-#include <qvaluestack.h>
+#include <q3valuestack.h>
 #include <qwaitcondition.h>
 #include <qmutex.h>
 #include <qobject.h>
@@ -94,7 +94,7 @@ private:
     Slave::SlaveCommand fetch_cmd();
     int nPendingCommand;
 
-    QValueStack < SlaveCommand > stack;
+    Q3ValueStack < SlaveCommand > stack;
     QWaitCondition worker;
     QMutex mutex;
     KIO::GetFileJob * copyjob;

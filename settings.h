@@ -89,14 +89,14 @@ extern QString ConnectionDevices[];
 #include <qdatetime.h>
 
 #include <kwin.h>
-#include <qvaluelist.h>
+#include <q3valuelist.h>
 struct DirItem
 {
     QString extRegexp;
     QString defaultDir;
 };
 
-typedef QValueList < DirItem > DirList;
+typedef Q3ValueList < DirItem > DirList;
 
 class Settings
 {

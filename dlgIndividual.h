@@ -30,13 +30,15 @@
 #include <qdatetime.h>
 
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QLabel>
 
 class Transfer;
 
 class QLabel;
 class QRadioButton;
 class QTabWidget;
-class QTextEdit;
+class Q3TextEdit;
 class QCheckBox;
 class KPushButton;
 class KProgress;
@@ -82,7 +84,7 @@ protected:
     QLabel *speedLabel;
     QLabel *sizeLabel;
     QLabel *resumeLabel;
-    QTextEdit *ml_log;
+    Q3TextEdit *ml_log;
 
     KProgress *m_pProgressBar;
     DockIndividual * m_pDockIndividual;

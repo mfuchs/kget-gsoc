@@ -25,7 +25,7 @@
  ***************************************************************************/
 
 
-#include <qgroupbox.h>
+#include <q3groupbox.h>
 #include <qlabel.h>
 #include <qcheckbox.h>
 #include <qlayout.h>

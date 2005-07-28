@@ -46,7 +46,7 @@ signals:
     void configChanged();
 
 protected slots:
-    void selectEntry(QListViewItem * item);
+    void selectEntry(Q3ListViewItem * item);
     void addEntry();
     void deleteEntry();
     void changeEntry();

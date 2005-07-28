@@ -26,13 +26,18 @@
 
 
 #include <qlayout.h>
+//Added by qt3to4:
+#include <QVBoxLayout>
+#include <Q3Frame>
+#include <QHBoxLayout>
+#include <QGridLayout>
 
 #include "dockindividual.h"
 
 #include <qlabel.h>
 #include <qtabwidget.h>
 #include <kprogress.h>
-#include <qtextedit.h>
+#include <q3textedit.h>
 #include <qcheckbox.h>
 #include <kpushbutton.h>
 #include <ksqueezedtextlabel.h>
@@ -52,7 +57,7 @@
 
 
 DlgIndividual::DlgIndividual(Transfer * _item)
-    : QWidget(0, "dialog", WDestructiveClose)
+    : QWidget(0, "dialog", Qt::WDestructiveClose)
 {
     item = _item;
 
@@ -128,9 +133,9 @@ DlgIndividual::DlgIndividual(Transfer * _item)
     connect( keepOpen, SIGNAL( toggled(bool) ), SLOT( slotKeepOpenToggled(bool) ) );
     topLayout->addWidget(keepOpen);
 
-    QFrame *line3 = new QFrame( this );
-    line3->setFrameShape( QFrame::HLine );
-    line3->setFrameShadow( QFrame::Sunken );
+    Q3Frame *line3 = new Q3Frame( this );
+    line3->setFrameShape( Q3Frame::HLine );
+    line3->setFrameShadow( Q3Frame::Sunken );
     topLayout->addWidget( line3 );
 
     hBox = new QHBoxLayout();
@@ -178,12 +183,12 @@ DlgIndividual::DlgIndividual(Transfer * _item)
     connect(spins, SIGNAL(valueChanged(const QDateTime &)), item, SLOT(slotStartTime(const QDateTime &)));
 
     // adding item log
-    ml_log = new QTextEdit(panelAdvanced);
+    ml_log = new Q3TextEdit(panelAdvanced);
     ml_log->setTextFormat(LogText);
     ml_log->setReadOnly(true);
     // ml_log->setFixedSize(sizeHint());
-    ml_log->setVScrollBarMode(QScrollView::Auto);
-    ml_log->setWordWrap(QTextEdit::NoWrap);
+    ml_log->setVScrollBarMode(Q3ScrollView::Auto);
+    ml_log->setWordWrap(Q3TextEdit::NoWrap);
 
     // ml_log->setSizePolicy(policy);
 

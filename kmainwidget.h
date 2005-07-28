@@ -34,6 +34,10 @@
 #include "common.h"
 
 #include "kget_iface.h"
+//Added by qt3to4:
+#include <QDragEnterEvent>
+#include <QCustomEvent>
+#include <QDropEvent>
 
 class KAction;
 //class KToggleAction;

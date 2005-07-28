@@ -38,7 +38,7 @@
 #include "kmainwidget.h"
 #include "dlgSystem.h"
 
-#include <qbuttongroup.h>
+#include <q3buttongroup.h>
 #include <qlabel.h>
 
 

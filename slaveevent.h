@@ -28,6 +28,8 @@
 #define SLAVEEVENT_H
 
 #include <qevent.h>
+//Added by qt3to4:
+#include <QCustomEvent>
 
 class Transfer;
 

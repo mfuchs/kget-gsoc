@@ -46,7 +46,7 @@
                         <cstring>spacer5</cstring>
                     </property>
                     <property name="orientation">
-                        <enum>Vertical</enum>
+                        <enum>Qt::Vertical</enum>
                     </property>
                     <property name="sizeType">
                         <enum>Expanding</enum>
@@ -218,9 +218,9 @@
     </connection>
     <connection>
         <sender>lv_entries</sender>
-        <signal>selectionChanged(QListViewItem*)</signal>
+        <signal>selectionChanged(Q3ListViewItem*)</signal>
         <receiver>DlgDirectoriesBase</receiver>
-        <slot>selectEntry(QListViewItem*)</slot>
+        <slot>selectEntry(Q3ListViewItem*)</slot>
     </connection>
     <connection>
         <sender>pb_add</sender>
@@ -246,7 +246,7 @@
     <include location="global" impldecl="in implementation">kiconloader.h</include>
 </includes>
 <slots>
-    <slot access="protected" specifier="pure virtual">selectEntry(QListViewItem *)</slot>
+    <slot access="protected" specifier="pure virtual">selectEntry(Q3ListViewItem *)</slot>
     <slot specifier="pure virtual">upEntry()</slot>
     <slot>downEntry()</slot>
     <slot>addEntry()</slot>

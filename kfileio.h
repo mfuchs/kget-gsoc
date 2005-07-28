@@ -1,3 +1,5 @@
+//Added by qt3to4:
+#include <Q3CString>
 /***************************************************************************
 *                                kfileio.h
 *                             -------------------
@@ -35,7 +37,7 @@ QString kFileToString(const QString & fileName, bool ensureNewline = TRUE, bool 
  * Replaces existing files without warning if askIfExists==FALSE.
  * Makes a copy if the file exists to filename~ if createBackup==TRUE.
  */
-bool kCStringToFile(const QCString & buffer, const QString & fileName, bool askIfExists = FALSE, bool createBackup = TRUE, bool withDialogs = TRUE);
+bool kCStringToFile(const Q3CString & buffer, const QString & fileName, bool askIfExists = FALSE, bool createBackup = TRUE, bool withDialogs = TRUE);
 
 // Does not stop at NUL
 bool kByteArrayToFile(const QByteArray & buffer, const QString & fileName, bool askIfExists = FALSE, bool createBackup = TRUE, bool withDialogs = TRUE);

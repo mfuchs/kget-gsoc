@@ -27,7 +27,7 @@
 
 #include <qpushbutton.h>
 #include <qtoolbutton.h>
-#include <qlistview.h>
+#include <q3listview.h>
 
 #include <qdir.h>
 
@@ -59,7 +59,7 @@ void DlgDirectories::slotDirectoryChanged( )
     pb_add->setEnabled(!le_ext->text().isEmpty() &&!le_dir->url().isEmpty() );
 }
 
-void DlgDirectories::selectEntry(QListViewItem * item)
+void DlgDirectories::selectEntry(Q3ListViewItem * item)
 {
     if (item) {
         le_ext->setText(item->text(0));
@@ -75,7 +75,7 @@ void DlgDirectories::selectEntry(QListViewItem * item)
 
 void DlgDirectories::updateUpDown()
 {
-    QListViewItem *item = lv_entries->selectedItem();
+    Q3ListViewItem *item = lv_entries->selectedItem();
 
     pb_up->setEnabled( item && item->itemAbove() );
     pb_down->setEnabled( item && item->itemBelow() );
@@ -98,7 +98,7 @@ void DlgDirectories::addEntry()
         return;
     }
 
-    new QListViewItem(lv_entries, ext, dir);
+    new Q3ListViewItem(lv_entries, ext, dir);
     updateUpDown();
 
     emit configChanged();
@@ -107,7 +107,7 @@ void DlgDirectories::addEntry()
 
 void DlgDirectories::deleteEntry()
 {
-    QListViewItem *item = lv_entries->selectedItem();
+    Q3ListViewItem *item = lv_entries->selectedItem();
     delete item;
     updateUpDown();
     emit configChanged();
@@ -116,7 +116,7 @@ void DlgDirectories::deleteEntry()
 
 void DlgDirectories::changeEntry()
 {
-    QListViewItem *old_item = lv_entries->selectedItem();
+    Q3ListViewItem *old_item = lv_entries->selectedItem();
 
     if (old_item) {
         QString ext = le_ext->text();
@@ -134,7 +134,7 @@ void DlgDirectories::changeEntry()
             return;
         }
 
-        new QListViewItem(lv_entries, old_item, ext, dir);
+        new Q3ListViewItem(lv_entries, old_item, ext, dir);
         delete old_item;
         emit configChanged();
     }
@@ -143,7 +143,7 @@ void DlgDirectories::changeEntry()
 
 void DlgDirectories::downEntry()
 {
-    QListViewItem *item = lv_entries->selectedItem();
+    Q3ListViewItem *item = lv_entries->selectedItem();
 
     if ( !item )
         return;
@@ -157,7 +157,7 @@ void DlgDirectories::downEntry()
 
 void DlgDirectories::upEntry()
 {
-    QListViewItem *item = lv_entries->selectedItem();
+    Q3ListViewItem *item = lv_entries->selectedItem();
 
     if ( !item || !item->itemAbove() )
         return;
@@ -177,9 +177,9 @@ void DlgDirectories::setData()
         // we need to insert items in the reverse order
         // because "new QListViewItem" puts itself at the beginning
         for (it = ksettings.defaultDirList.fromLast(); it != ksettings.defaultDirList.begin(); it--) {
-            new QListViewItem(lv_entries, (*it).extRegexp, (*it).defaultDir);
+            new Q3ListViewItem(lv_entries, (*it).extRegexp, (*it).defaultDir);
         }
-        new QListViewItem(lv_entries, (*it).extRegexp, (*it).defaultDir);
+        new Q3ListViewItem(lv_entries, (*it).extRegexp, (*it).defaultDir);
     }
 }
 
@@ -187,10 +187,10 @@ void DlgDirectories::setData()
 void DlgDirectories::applyData()
 {
     ksettings.defaultDirList.clear();
-    QListViewItemIterator it(lv_entries);
+    Q3ListViewItemIterator it(lv_entries);
 
     for (; it.current(); ++it) {
-        QListViewItem *item = it.current();
+        Q3ListViewItem *item = it.current();
 
         DirItem ditem;
 

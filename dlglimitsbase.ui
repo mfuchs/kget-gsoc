@@ -101,7 +101,7 @@
                         <cstring>spacer19</cstring>
                     </property>
                     <property name="orientation">
-                        <enum>Horizontal</enum>
+                        <enum>Qt::Horizontal</enum>
                     </property>
                     <property name="sizeType">
                         <enum>Expanding</enum>
@@ -118,7 +118,7 @@
                         <cstring>spacer20</cstring>
                     </property>
                     <property name="orientation">
-                        <enum>Horizontal</enum>
+                        <enum>Qt::Horizontal</enum>
                     </property>
                     <property name="sizeType">
                         <enum>Expanding</enum>
@@ -135,7 +135,7 @@
                         <cstring>spacer21</cstring>
                     </property>
                     <property name="orientation">
-                        <enum>Horizontal</enum>
+                        <enum>Qt::Horizontal</enum>
                     </property>
                     <property name="sizeType">
                         <enum>Expanding</enum>
@@ -174,7 +174,8 @@
     </connection>
 </connections>
 <includes>
-    <include location="global" impldecl="in implementation">kdialog.h</include>
+	<include location="global" impldecl="in declaration">knuminput.h</include>
+	<include location="global" impldecl="in implementation">kdialog.h</include>
 </includes>
 <slots>
     <slot access="protected" specifier="pure virtual">slotChanged()</slot>

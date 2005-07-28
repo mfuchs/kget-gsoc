@@ -36,6 +36,8 @@
 
 #include "transfer.h"
 #include "transferlist.h"
+//Added by qt3to4:
+#include <QPixmap>
 
 #define NUM_COLS  9
 
@@ -56,7 +58,7 @@ TransferList::TransferList(QWidget * parent, const char *name)
     : KListView(parent, name)
 {
     // enable selection of more than one item
-    setSelectionMode( QListView::Extended );
+    setSelectionMode( Q3ListView::Extended );
 
     // // disable sorting and clicking on headers
     // setSorting( -1 );
@@ -113,8 +115,8 @@ TransferList::TransferList(QWidget * parent, const char *name)
 
     phasesNum = animConn.count();
 
-    connect(this, SIGNAL(doubleClicked(QListViewItem *)), SLOT(slotTransferSelected(QListViewItem *)));
-    connect(this, SIGNAL(rightButtonPressed(QListViewItem *, const QPoint &, int)), SLOT(slotPopupMenu(QListViewItem *)));
+    connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(slotTransferSelected(Q3ListViewItem *)));
+    connect(this, SIGNAL(rightButtonPressed(Q3ListViewItem *, const QPoint &, int)), SLOT(slotPopupMenu(Q3ListViewItem *)));
 }
 
 
@@ -137,13 +139,13 @@ Transfer *TransferList::addTransfer(const KURL & _source, const KURL & _dest,
 }
 
 
-void TransferList::slotTransferSelected(QListViewItem * item)
+void TransferList::slotTransferSelected(Q3ListViewItem * item)
 {
     emit transferSelected((Transfer *) item);
 }
 
 
-void TransferList::slotPopupMenu(QListViewItem * item)
+void TransferList::slotPopupMenu(Q3ListViewItem * item)
 {
     if (!item)
         return;
@@ -151,7 +153,7 @@ void TransferList::slotPopupMenu(QListViewItem * item)
 }
 
 
-void TransferList::setSelected(QListViewItem * item, bool selected)
+void TransferList::setSelected(Q3ListViewItem * item, bool selected)
 {
     bool tmpb = selected;
 
@@ -159,7 +161,7 @@ void TransferList::setSelected(QListViewItem * item, bool selected)
         tmpb = false;
     }
 
-    QListView::setSelected(item, tmpb);
+    Q3ListView::setSelected(item, tmpb);
 }
 
 

@@ -29,11 +29,13 @@
 #define _LOGWINDOW_H
 
 #include <qmap.h>
+//Added by qt3to4:
+#include <QCloseEvent>
 
 #include <kdialogbase.h>
 
-class QListView;
-class QTextEdit;
+class Q3ListView;
+class Q3TextEdit;
 
 
 class SeparatedLog:public QWidget
@@ -47,11 +49,11 @@ Q_OBJECT public:
     void refresh();
 
 protected slots:
-    void transferSelected(QListViewItem * item);
+    void transferSelected(Q3ListViewItem * item);
 
 private:
-    QListView * lv_log;
-    QTextEdit *ml_log;
+    Q3ListView * lv_log;
+    Q3TextEdit *ml_log;
 
     typedef QMap < uint, QString > TransferMap;
     TransferMap trMap;
@@ -77,7 +79,7 @@ protected:
     void closeEvent(QCloseEvent *);
 
 private:
-    QTextEdit * mixed_log;
+    Q3TextEdit * mixed_log;
     SeparatedLog *sep_log;
 };
 

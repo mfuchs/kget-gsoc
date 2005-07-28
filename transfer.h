@@ -30,7 +30,7 @@
 
 #include <klistview.h>
 #include <qdatetime.h>
-#include <qguardedptr.h>
+#include <qpointer.h>
 #include <qmap.h>
 
 #include <kurl.h>
@@ -233,7 +233,7 @@ private:
     TransferList *view;
 
     // individual download window
-    QGuardedPtr<DlgIndividual> dlgIndividual;
+    QPointer<DlgIndividual> dlgIndividual;
 	
 };
 

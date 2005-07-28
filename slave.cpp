@@ -34,6 +34,8 @@
 #include "transfer.h"
 
 #include <assert.h>
+//Added by qt3to4:
+#include <QEvent>
 
 Slave::Slave(Transfer * _parent, const KURL & _src, const KURL & _dest)
     : QObject(),

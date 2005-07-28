@@ -25,6 +25,12 @@
  ***************************************************************************/
 
 #include <qpainter.h>
+//Added by qt3to4:
+#include <QPixmap>
+#include <QMouseEvent>
+#include <QDragEnterEvent>
+#include <QResizeEvent>
+#include <QDropEvent>
 
 #include <kaction.h>
 #include <kapplication.h>
@@ -118,7 +124,7 @@ DropTarget::~DropTarget()
 void
 DropTarget::mousePressEvent(QMouseEvent * e)
 {
-    if (e->button() == LeftButton)
+    if (e->button() == Qt::LeftButton)
     {
         // toggleMinimizeRestore ();
 //        oldX = 0;
@@ -127,14 +133,14 @@ DropTarget::mousePressEvent(QMouseEvent * e)
         dx = QCursor::pos().x() - pos().x();
         dy = QCursor::pos().y() - pos().y();
     }
-    else if (e->button() == RightButton)
+    else if (e->button() == Qt::RightButton)
     {
         popupMenu->setItemEnabled(pop_Min, kmain->isVisible());
         popupMenu->setItemEnabled(pop_Max, kmain->isHidden());
 
         popupMenu->popup(QCursor::pos());
     }
-    else if (e->button() == MidButton)
+    else if (e->button() == Qt::MidButton)
     {
         kmain->slotPasteTransfer();
     }
@@ -152,7 +158,7 @@ void DropTarget::resizeEvent(QResizeEvent *)
 void DropTarget::dragEnterEvent(QDragEnterEvent * event)
 {
     event->accept(KURLDrag::canDecode(event)
-                  || QTextDrag::canDecode(event));
+                  || Q3TextDrag::canDecode(event));
 }
 
 
@@ -165,7 +171,7 @@ void DropTarget::dropEvent(QDropEvent * event)
     {
         kmain->addTransfers(list);
     }
-    else if (QTextDrag::decode(event, str))
+    else if (Q3TextDrag::decode(event, str))
     {
         kmain->addTransfer(str);
     }
@@ -224,7 +230,7 @@ void DropTarget::mouseReleaseEvent(QMouseEvent *)
 /** No descriptions */
 void DropTarget::mouseDoubleClickEvent(QMouseEvent * e)
 {
-    if (e->button() == LeftButton)
+    if (e->button() == Qt::LeftButton)
         toggleMinimizeRestore();
 }
 

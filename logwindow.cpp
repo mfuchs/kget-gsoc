@@ -26,7 +26,12 @@
 
 
 #include <qlayout.h>
-#include <qlistview.h>
+#include <q3listview.h>
+//Added by qt3to4:
+#include <QVBoxLayout>
+#include <QFrame>
+#include <QGridLayout>
+#include <QCloseEvent>
 
 #include <klocale.h>
 #include <kdialog.h>
@@ -37,7 +42,7 @@
 #include "logwindow.h"
 
 #include <kapplication.h>
-#include <qtextedit.h>
+#include <q3textedit.h>
 
 // // Replace regular space with nbsp
 // QString replaceSpaces(const QString &str) {
@@ -88,7 +93,7 @@ SeparatedLog::SeparatedLog(QWidget * parent):QWidget(parent)
     topGridLayout->setColStretch(0, 3);
     topGridLayout->setColStretch(1, 10);
 
-    lv_log = new QListView(this);
+    lv_log = new Q3ListView(this);
     lv_log->setMultiSelection(false);
     lv_log->setAllColumnsShowFocus(true);
     lv_log->setSorting(-1);
@@ -98,13 +103,13 @@ SeparatedLog::SeparatedLog(QWidget * parent):QWidget(parent)
 
     topGridLayout->addWidget(lv_log, 0, 0);
 
-    connect(lv_log, SIGNAL(selectionChanged(QListViewItem *)), SLOT(transferSelected(QListViewItem *)));
+    connect(lv_log, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(transferSelected(Q3ListViewItem *)));
 
-    ml_log = new QTextEdit(this);
+    ml_log = new Q3TextEdit(this);
     ml_log->setTextFormat(LogText);
     ml_log->setMinimumSize(300, 200);
-    ml_log->setVScrollBarMode(QScrollView::Auto);
-    ml_log->setWordWrap(QTextEdit::NoWrap);
+    ml_log->setVScrollBarMode(Q3ScrollView::Auto);
+    ml_log->setWordWrap(Q3TextEdit::NoWrap);
 
     topGridLayout->addWidget(ml_log, 0, 1);
 }
@@ -114,8 +119,8 @@ void SeparatedLog::addLog(uint id, const QString & filename, const QString & mes
 {
     if (!trMap.contains(id)) {
         trMap.insert(id, message);
-        QListViewItem *last=lv_log->lastItem();
-        new QListViewItem(lv_log, last);
+        Q3ListViewItem *last=lv_log->lastItem();
+        new Q3ListViewItem(lv_log, last);
         last=lv_log->lastItem();
         last->setText(0, QString::number(id));
         last->setText(1, filename);
@@ -130,7 +135,7 @@ void SeparatedLog::addLog(uint id, const QString & filename, const QString & mes
 }
 
 
-void SeparatedLog::transferSelected(QListViewItem * item)
+void SeparatedLog::transferSelected(Q3ListViewItem * item)
 {
     if (item) {
         idSelected = item->text(0).toUInt();
@@ -163,10 +168,10 @@ LogWindow::LogWindow():KDialogBase(Tabbed, i18n("Log Window"), Close, Close, 0, 
     QFrame *page = addPage(i18n("Mixed"));
     QVBoxLayout *topLayout = new QVBoxLayout(page, 0, spacingHint());
 
-    mixed_log = new QTextEdit(page);
+    mixed_log = new Q3TextEdit(page);
     mixed_log->setTextFormat(LogText);
-    mixed_log->setVScrollBarMode(QScrollView::Auto);
-    mixed_log->setWordWrap(QTextEdit::NoWrap);
+    mixed_log->setVScrollBarMode(Q3ScrollView::Auto);
+    mixed_log->setWordWrap(Q3TextEdit::NoWrap);
     topLayout->addWidget(mixed_log);
 
     page = addPage(i18n("Separated"));
