@@ -56,7 +56,7 @@ DlgPreferences::DlgPreferences(QWidget * parent):
         KDialogBase(Tabbed, i18n("Configure"), Ok|Apply|Help|Cancel, Ok, parent, "DlgPreferences", true)
 {
     // add pages
-    Q3Frame *page = addPage(i18n("Connection"));
+    QFrame *page = addPage(i18n("Connection"));
     QVBoxLayout *topLayout = new QVBoxLayout(page, 0, spacingHint());
 
     conDlg = new DlgConnection(page);
