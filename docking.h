@@ -39,7 +39,7 @@
 
 #include <ksystemtray.h>
 
-class KPopupMenu;
+class KMenu;
 class KMainWidget;
 
 class DynamicTip : public QToolTip

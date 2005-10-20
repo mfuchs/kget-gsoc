@@ -31,7 +31,7 @@
 #include <ksystemtray.h>
 #include "common.h"
 
-class KPopupMenu;
+class KMenu;
 
 class DockIndividual : public KSystemTray  {
     Q_OBJECT
@@ -42,7 +42,7 @@ public:
     void setTip(const QString &);
     void setValue(int value);
     /** No descriptions */
-    virtual void contextMenuAboutToShow ( KPopupMenu* menu );
+    virtual void contextMenuAboutToShow ( KMenu* menu );
 };
 
 #endif

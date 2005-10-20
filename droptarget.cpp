@@ -40,7 +40,7 @@
 #include <kmainwindow.h>
 #include <kwin.h>
 #include <klocale.h>
-#include <kpopupmenu.h>
+#include <kmenu.h>
 #include <kurldrag.h>
 
 #include "kmainwidget.h"
@@ -91,7 +91,7 @@ DropTarget::DropTarget(KMainWindow * mainWin):QWidget()
     setBackgroundPixmap( bgnd );
 
     // popup menu for right mouse button
-    popupMenu = new KPopupMenu();
+    popupMenu = new KMenu();
     popupMenu->insertTitle(kapp->caption());
     popupMenu->setCheckable(true);
 

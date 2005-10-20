@@ -26,7 +26,7 @@
 
 #include <qtooltip.h>
 
-#include <kpopupmenu.h>
+#include <kmenu.h>
 
 #include "dockindividual.h"
 DockIndividual::DockIndividual(QWidget *parent, const char *name ) : KSystemTray(parent,name)
@@ -93,7 +93,7 @@ void DockIndividual::setTip(const QString & _tip)
 
 #include "dockindividual.moc"
 /** No descriptions */
-void DockIndividual::contextMenuAboutToShow ( KPopupMenu* menu )
+void DockIndividual::contextMenuAboutToShow ( KMenu* menu )
 {
     menu->removeItemAt (3);
 }

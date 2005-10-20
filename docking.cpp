@@ -34,7 +34,7 @@
 #include <kapplication.h>
 #include <kiconloader.h>
 #include <klocale.h>
-#include <kpopupmenu.h>
+#include <kmenu.h>
 #include <kurldrag.h>
 
 #include "kmainwidget.h"
@@ -49,7 +49,7 @@ DockWidget::DockWidget(KMainWidget * _parent):KSystemTray(_parent)
     setPixmap( loadIcon( "kget_dock" ));
 
     // popup menu for right mouse button
-    KPopupMenu *popupMenu = contextMenu();
+    KMenu *popupMenu = contextMenu();
     parent->action("drop_target")->plug(popupMenu);
     parent->action("konqueror_integration")->plug(popupMenu);
     popupMenu->insertSeparator();

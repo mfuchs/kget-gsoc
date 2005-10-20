@@ -36,7 +36,7 @@
 #include <QResizeEvent>
 #include <QDropEvent>
 
-class KPopupMenu;
+class KMenu;
 class KMainWidget;
 class KMainWindow;
 
@@ -68,7 +68,7 @@ private slots:
     void toggleMinimizeRestore();
 
 private:
-    KPopupMenu * popupMenu;
+    KMenu * popupMenu;
     KMainWidget *parent;
 
     bool b_sticky;

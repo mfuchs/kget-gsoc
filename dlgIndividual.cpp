@@ -48,6 +48,7 @@
 #include <klocale.h>
 #include <ktoolbar.h>
 #include <krun.h>
+#include <ktoolinvocation.h>
 #include "common.h"
 
 #include "transfer.h"
@@ -339,7 +340,7 @@ void DlgIndividual::slotOpenLocation()
 
     KURL location=m_location;
     location.setFileName("");
-    kapp->invokeBrowser( location.url() );
+    KToolInvocation::invokeBrowser( location.url() );
 
 #ifdef _DEBUG
     sDebugOut<<endl;

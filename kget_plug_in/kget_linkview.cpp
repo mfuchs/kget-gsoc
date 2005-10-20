@@ -9,6 +9,7 @@
 #include <kprocess.h>
 #include <kstdaction.h>
 #include <ktoolbar.h>
+#include <ktoolinvocation.h>
 
 #define COL_NAME 0
 #define COL_DESC 1
@@ -110,7 +111,7 @@ void KGetLinkView::slotStartLeech()
 
         if ( !p_dcopServer->isApplicationRegistered( "kget" ) )
         {
-            KApplication::startServiceByDesktopName( "kget" );
+            KToolInvocation::startServiceByDesktopName( "kget" );
         }
         kapp->updateRemoteUserTimestamp( "kget" );
 

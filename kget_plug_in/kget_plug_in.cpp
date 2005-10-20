@@ -30,7 +30,7 @@
 #include <kinstance.h>
 #include <klocale.h>
 #include <kmessagebox.h>
-#include <kpopupmenu.h>
+#include <kmenu.h>
 #include <krun.h>
 
 #include <dom/html_document.h>
@@ -178,7 +178,7 @@ extern "C"
 {
     KDE_EXPORT void* init_khtml_kget()
     {
-        KGlobal::locale()->insertCatalogue("kget");
+        KGlobal::locale()->insertCatalog("kget");
         return new KPluginFactory;
     }
 
