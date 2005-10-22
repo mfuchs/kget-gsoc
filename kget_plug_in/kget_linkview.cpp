@@ -53,7 +53,8 @@ KGetLinkView::KGetLinkView( QWidget *parent, const char *name )
     toolBar()->insertLineSeparator();
     actionSelectAll->plug( toolBar() );
 
-    m_view = new KListView( this, "listview" );
+    m_view = new KListView( this );
+    m_view->setObjectName( "listview" );
     m_view->setSelectionMode( QListView::Extended );
     m_view->addColumn( i18n("File Name") );
     m_view->addColumn( i18n("Description") );
