@@ -59,7 +59,7 @@ Settings::load()
 {
     sDebug << "Loading settings" << endl;
 
-    KConfig *config = kapp->config();
+    KConfig *config = KGlobal::config();
 
     // read system options
     config->setGroup("System");
@@ -193,7 +193,7 @@ void Settings::save()
 {
     sDebug << "Saving settings" << endl;
 
-    KConfig *config = kapp->config();
+    KConfig *config = KGlobal::config();
 
     // write connection options
     config->setGroup("Connection");
