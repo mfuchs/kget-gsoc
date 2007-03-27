@@ -1,0 +1,309 @@
+2006-09-01 Urs Wolfer <uwolfer @ kde.org>
+        * Make DBUS really working.
+
+2006-08-31 Urs Wolfer <uwolfer @ fwo.ch>
+        * Enable again FileDialog::getExistingDirectory. It is now fixed.
+        * YesNo messageboxes are bad for usability. Replace with YesNoCancel.
+        * Fix the messagebox order in the add download process (do not show the
+          same box twice).
+
+2006-08-31 Dario Massarin <nekkar@libero.it>
+        * Add the TransfersViewDelegate and TransferTreeSelectionModel classes.
+        * The former will be used to redesign the TransfersView look & feel,
+          now it is used just to catch the mouse events.
+        * The latter was introduced to have more control over the
+          items that can be selected by the user. In this way it was possible
+          to inhibit the selection of group objects.
+        * Show the KMenu when the user right clicks on a selection of transfers.
+
+2005-11-03 Urs Wolfer <uwolfer @ fwo.ch>
+        * Add option to show / hide menubar and toolbar (forwardport)
+
+2005-10-10 Urs Wolfer <uwolfer @ fwo.ch>
+        * Icon updates: Remove a lot icons. Most icons are part of
+          kdelibs. cr22-{app-kget}/{mime-kget_list}.png  icons were 32x32.
+          Resized to 22x22. edit_add / edit_remove icons (used in sidebar)
+          aren't in kdelibs. Replaced with viewmag+/-. I know they are not
+          very suitable. But we have to do a lot of work on the sidebar.
+        * (Re-)implement "Copy URL to Clipboard" transfer action.
+
+2005-10-07 Urs Wolfer <uwolfer @ fwo.ch>
+        * Work on configuration dialogs
+        * Make droptarget-sticky function working
+        * Start implementing expert-mode
+        * (Re-)implement clipboard-autopaste function
+
+2005-10-06 Urs Wolfer <uwolfer @ fwo.ch>
+        * Make commandline option --showDropTarget working
+
+2005-09-17 Urs Wolfer <uwolfer @ fwo.ch>
+        * Konqueror integration implementation.
+        Note: Konqueror freezes at download start if integration is enabled.
+        But I think it's more a Konqueror than a KGet problem. I hope I'll find a solution.
+
+2005-09-10 Dario Massarin <nekkar@libero.it>
+        * Now a TransferHandler object is created always bt the TransferFactory.
+        This allows to easily reimplement the TransferHandler class, just by
+        creating your own class and returning it when the createTransferHandler()
+        function gets called.
+        * More work on the BTTransferHandler class.
+        * The transfer plugins can now provide its details widget that is 
+        displayed automatically at the bottom of the TransferDetails widget.
+        * Implementation of a first bittorrent details widget. 
+        * Note that the bittorrent plugin currently has some problems related 
+        to threads. It seems that Qt4 is quite different from Qt3 in these regards.
+
+2005-09-08 Dario Massarin <nekkar@libero.it>
+        * Start to implement properly the detailsWidgets for each transfer.
+        Now we have a basic widget available with all the plugins and the 
+        next step is to add at the bottom of it another widget provided
+        by each plugin's factory with the createTransferDetails() function.
+        * Start to implement a BTTransferHandler class, reimplementation 
+        of the generic TransferHandler class.
+
+2005-09-02 Urs Wolfer <uwolfer @ fwo.ch>
+        * *Replace the old droptarget icon with the nuvola one
+
+2005-08-31 Urs Wolfer <uwolfer @ fwo.ch>
+        * Icons in smaller sizes (forwardport)
+        * Work on configuration dialogs. Not finished yet.
+
+2005-08-23 Urs Wolfer <uwolfer @ fwo.ch>
+        * Better KGet mime icon (forwardport)
+        * Remove artifacts from images (forwardport)
+        * Add action to show / hide drop target
+        * Add some actions to maintoolbar (new download, show / hide drop target)
+        * Fix a problem with the configuration dialog (wasn't shown the first call)
+        * Remove some compiler warnings
+
+2005-08-12 Dario Massarin <nekkar@libero.it>
+        * Make the configuration dialogs compile again, but we have to 
+        completely redesign them, since they usually refer to settings
+        that are not available anymore.
+        * Fix a problem in the scheduler introduced with the last commit.
+
+2005-08-11 Dario Massarin <nekkar@libero.it>
+        * More work on the ViewsContainer class. Now we have 3 buttons:
+        "Downloads", "Finished" and "Transfer Details" one. The last one
+        is associated with a QMenu that lets you select which transfer to 
+        visualize.
+        * Fixed problem when stopping delayed transfers.
+
+2005-08-06 Dario Massarin <nekkar@libero.it>
+        * Change the way we handle the Transfer actions
+        * Reoganize the gui, introducing a new ViewsContainer class.
+
+2005-08-02 Dario Massarin <nekkar@libero.it>
+        Big commit:
+        * KGet ported to qt4. Here there are some issues that still need to be
+        resolved. For example I had to disable the bittorrent plugin becouse
+        currently I don't know how to make it compile again.
+        * Started implementing a new sidebar with qt3. Then I switched to qt4 and
+        realized I had to rewrite it, since I made use of the QListBox classes :-(
+        So I did. I used the QVBoxLayout class.
+        More to come..
+
+2005-07-29 Dario Massarin <nekkar@libero.it>
+        Many changes:
+        * Implement two TransferGroup actions (start and stop) and a popupMenu()
+        function in the TransferGroupHandler function.
+        This means that now we can start the download of a group and all the
+        necessary scheduling operations are handled by the scheduler.
+        * Make it possible to have actions defined in the TransferGroupHandler
+        without having to make the handler a QObject. This was achieved by 
+        creating a QObject object on demand only if necessary. I'm planning
+        to do the same with the TransferHandler class (where this issue becomes 
+        even more critical, especially if the user has lots of transfers).
+        * Right clicking on a TransferGroup in the mainview shows a popup menu
+        populated with the available actions.
+        * Found a way to implement delays in the jobs. Since I don't want a Job to
+        be a QObject, I implemented the timers inside the Scheduler.
+        * When a download switches in the aborted status, delay it.
+        * Now if we move the transfers in a group, they are started or stopped
+        accordingly to their new position. Wow. This finally makes it possible for
+        us to decide in which order to download files!
+        * Implement the start and stop functions in the scheduler, which will
+        start and stop the download in all the available queues.
+        * Hide the m_statusText and m_statusPixmap members in the Transfer class.
+        A Transfer plugin now should call the Transfer::setStatus( ) function to 
+        set them.
+        * Fixed a couple of memory leaks
+
+2005-04-25 Dario Massarin <nekkar@libero.it>
+        Lots of changes:
+        * Redesign of the TransferAction class.
+        * Now the selected transfers are handled in a perfect model/view style.
+        You can select a transfer by means of the TransferHandler. The selection
+        of a transfer triggers a TransferChangedEvent. The list of selected
+        transfers can be retrived from the model.
+        * With this code in place, I added, as a proof of concept, two actions
+        in the toolbar, that are executed only on the selected transfers.
+        * New default TransferAction: "open destination". I think it's very useful
+        * In the mainview the icon associated with each transfer now reflects
+        the mymetype of the file.
+        * Several changes in the Transfer and TransferGroup API
+        * Reorganization of the bittorrent plugin code. Now we check in the
+        Factory if the file is local, and only if this is true we create the
+        BTTransfer object. This allowed to remove lots of code.
+        * Now we can load and save the transfers when starting and closing kget.
+        It seems to work, but I didn't test this very much.
+        * Other things, that now I don't remember :-)
+
+2005-04-17 Dario Massarin <nekkar@libero.it>
+        Lots of stuff:
+        * Much work on the Job, JobQueue, TransferGroup, TransferHandler classes
+        * Make it possible for each Transfer plugin to define its own actions,
+        or to simply extend the default ones that ship with the base Transfer
+        class.
+        * Add a new TransferAction class that is basically a KAction with the
+        possibility to attach Transfer objects. When the action is executed,
+        this applies to all the attached Transfers. In this way we can create
+        each action only once, saving lots of resources.
+        * Make the TransferFactory return a pointer to a KPopupMenu, filled with
+        the actions that belong to all the transfer of the given list of transfers.
+        * Start to implement the start() and stop() functions in TransferHandler
+        * Start to turn the JobQueue in a standalone class, that doesn't need
+        to be reimplemented (but that can be reimplemented, as the TransferGroup
+        class does).
+        * Start to implement the Scheduler class.
+        * Various fixes and cleanups.
+
+        The code now allows to start and stop a transfer from the view, only by means
+        of the popupmenu. I think now it should be possible to add the long
+        awaited bitTorrent plugin, at least for testing pourposes.
+
+2005-03-26 Dario Massarin <nekkar@libero.it>
+        * Reorganization of the model class
+        * The new plugin structure starts working
+
+2005-03-06 Dario Massarin <nekkar@libero.it>
+        The work on the new architecture has started.
+
+2005-01-29 Dario Massarin <nekkar@libero.it>
+        * Make it possible in the mainview to move the transfer to a new group
+        using the popupmenu.
+        * group.{h,cpp}: big optimization: cache the groupChanged signals. In this 
+        way the GroupList object emits far less signals than before. If you have n
+        transfers, this can save up to 2*n-1 signal calls that are all packed in
+        a single signal.
+        * Cleaned up the code a bit.
+
+2005-01-22 Dario Massarin <nekkar@libero.it>
+        * Ported the new sidebar to the QListBox class.
+
+2005-01-15 Dario Massarin <nekkar@libero.it>
+        * Initial implementation of a new sidebar.
+
+2005-01-14 Dario Massarin <nekkar@libero.it>
+        * Improve the progressbar look&feel
+
+2005-01-14 Dario Massarin <nekkar@libero.it>
+        * Improve the mainview look&feel, especially in the way the groups
+        are painted. The priority column has been removed. The arrow indicators
+        showing the priority have been changed to display a kget icon, that gets
+        colorized with a color which depends on the priority level.
+
+2005-01-14 Dario Massarin <nekkar@libero.it>
+        * Implement delay in the transfer class. We don't need this function
+        to be abstract virtual. Remove its partial implementation from the 
+        TransferKio class.
+        * Now the scheduler sets a small delay (5 seconds) when necessary
+        (with broken urls) to the transfers. This is enough to allow the
+        scheduler to skip them when downloading and to go on downloading the
+        non broken urls. Nice behaviour, IMHO.
+
+2005-01-14 Dario Massarin <nekkar@libero.it>
+        * Correct stupid bug that caused wrong updates of the percent field 
+        in the group object.
+
+2005-01-13 Dario Massarin <nekkar@libero.it>
+        * Reorganization of the directories. Some files have been renamed.
+
+2004-11-05 Dario Massarin <nekkar@libero.it>
+        * Fixed nasty bug in transferKio.cpp which produced a crash every time
+        a download was aborted.
+        * Now also the scheduler is a TransferInterrogator. This means that 
+        I have removed the transferStatusChanged signal and now only the
+        transferChanged signal is emitted from the transfer object :-)
+
+2004-11-05 Dario Massarin <nekkar@libero.it>
+        * New system tray icon effects. This has been realized looking at the 
+        amarok code. In the future, when other things will be in place, I will
+        surely paint an icon filled according to the current downloading progress.
+
+2004-11-05 Dario Massarin <nekkar@libero.it>
+        * Delayed initialization. This should speed up the application startup
+        especially when the user has lots of transfers.
+
+2004-11-05 Dario Massarin <nekkar@libero.it>
+        * Cleanups all over the code.
+        
+        * interrogator.h: Now we have this new file that defines the two classes
+        TransferInterrogator and GroupInterrogator. If a class wants to interrogate
+        a transfer or a group object it should reimplement them.
+        
+        * group.{h,cpp}: The progressed size, totalSize and percent properties are
+        not saved anymore to file. Now we update the group properties every time
+        we see that a transfer that belongs to the group has changed. Each group 
+        change is notified to all the views.        
+        
+        * mainview.cpp: fixed crash when executing actions on a group item.
+
+2004-10-17 Dario Massarin <nekkar@libero.it>
+    
+        * transfer.{h,cpp}: New class TransferInterrogator that abstracts the
+        objects that can "interrogate" the Transfers using the function
+        changesFlags(TransferInterrogator *). In this way not only the views
+        can do it but also, for example, the GroupList objects.
+
+        * group.{h,cpp}: The Group class has been further developed to keep
+        global statistics on its transfers. There is still lots of work to do.
+        
+        * mainview.{h,cpp}: Tried to achieve a better look&feel. I'm not very
+        happy with the final result, yet.
+
+2004-10-16 Dario Massarin <nekkar@libero.it>
+    
+        * Added license statements.
+        
+        * mainview.cpp: Some more work on the groups.
+
+2004-10-10 Dario Massarin <nekkar@libero.it>
+
+        * group.{h,cpp}: This file introduces the Group and GroupList classes.
+        
+        * panels/groupspanel.{h,cpp}: This is the new "group panel". It's far
+        from complete, but at least we can add/remove groups, this gets notified
+        to all the views and saved to the "transfers.kgt" together with the
+        transfers
+
+2004-10-04 Dario Massarin <nekkar@libero.it>
+        
+        * transfer.{h,cpp}: The transfer class has been completely rewritten. Now
+        it is possible to implement a new Transfer simply inheriting the Transfer
+        class and implementing the virtual methods.
+        There is also a new api that allows each view to ask the transfer which
+        particular field in the Info struct has changed since the last update. This
+        results in a big optimization becouse we can now avoid unnecessary repaints.
+        
+        * transferKio.{h,cpp}: This is the first implemented transfer. It's the 
+        simplest transfer one can implement since it uses a KIOSlave.
+        
+        * views/mainview.{h,cpp}: New view that should be the main one. It
+        reimplements the KListView class. The "special features" list contains
+        the introduction of some cool icons and a new progress bar.
+        
+2004-10-05 Dario Massarin <nekkar@libero.it>
+        * transferlist.{h,cpp}: Api semplifications. In this moment there are some
+        new problems I have just discover and I will fix tomorrow.
+        
+        * transferlist.{h,cpp}, transfer.{h,cpp}: The way kget saves the transfers
+        into the transfers.kgt file has been completely rethinked. The code has been
+        rewritten from scratch and now it uses QDom. In this way each new transfer can,
+        if needed, save its own data that isn't already saved by the Transfer class.
+        
+        * some fixes..
+                
+        
+        
+        

@@ -1,10 +1,167 @@
-Add a plug-in for konqueror
-Add support for mirrors
-Add bandwidth limiting
-Splits download in 2 segments
-Better icons
-Add Help & Guide
+TODO-list for KGet
+======================
+
+<nick>  == reported by
+Legend:
+    ADD - ADDed
+    CHG - CHanGed
+    FIX - FIXed
 
 
+    IN PROGRESS
+---------------------
 
+        TODO
+---------------------
+
+SHORT-TERM (URGENT):
+
+  -- MAINWINDOW --
+
+  -- SCHEDULER --
+
+  -- SIDEBAR --
+  ADD <dario> re-import the sidebar (and think about a better one).
+  ADD <dario> add a "Finished" (is this the best name?) item. This will point
+      to the downloaded files.
+  ADD <dario> add a popupmenu to add or delete groups by right-clicking on them.
+
+  -- MAINVIEW --
+  ADD <dario> make it possible to drag a transfer in a group inside the
+      mainview or in the groups visible in the groupspanel.
+  ADD <dario> Implement the selection of a specific group. In this way 
+      selecting a group from the sidebar should display only its transfers.
+  ADD <dario> add a coloured band over the mainview displaying the currently
+      display items. For example if I select "Downloads" from the sidebar it
+      should display "Downloads". If instead I select a specific group <groupname>
+      it should display "Downloads - <groupname>"
+  ADD <dario> handle the situation when we remove a group which has transfers.
+
+  -- BITTORRENT PLUGIN --
+  FIX <dario> when stopping a transfer immediately after having started it, the
+      plugin crashes.
+  FIX <dario> sometimes, the bittorrent plugin blocks all the kget gui for
+      some seconds.
+  FIX <dario> if we have a torrent file and we make some copies of it with
+      different names, and then we add all the torrents to kget, kget crashes
+  FIX <dario> the transfer should switch its status to finished when we start
+      an already downloaded file.
+
+  -- MISCELLANEOUS --
+  ADD <dario> implement the GlobalStatus object and make the
+      systray to update using the ViewInterface slots instead of the actual hack.
+      To make this happen we need to create also a special group containing all
+      the ungrouped Transfers. Then we just need to sum the progress of each group
+      to know the global download percentage.
+  ADD <dario> implement progressive filling of the icon in the system tray
+  CHG <pino> verify that all the settings are respected
+  ADD <pino> implement the grouping functionalities
+  ADD <dario> in order to have all the necessary informations to calculate a
+      global progress percentage, we need to know the size of each transfer
+      in the list. This is currently not the case. Now we have this information
+      only for the already started transfers. Maybe we should add a stat() virtual 
+      function to the transfer that makes the transfer retrieve all the necessary
+      informations. Then we should also create a Job, returned by the Transfer 
+      factory, to be added to the scheduler ( that's the new scheduler power ;-) ).
+
+MID-TERM:
+
+  ADD <dario> change the actual way we use the priority for each transfer.
+      In the future it will describe the precise order the transfers will be 
+      downloaded.
+  ADD <dario> use KPassivePopups to notify when all the transfers have been
+      downloaded.
+  CHG <dario> profile kget and look for possible optimizations.
+  ADD <kget> bitTorrent support
+  CHG <kget> setup a decent gui with a decent toolbars.
+  CHG <kget> sync the configuration options with what has currently been 
+      implemented.
+  ADD <dario> make it possible to associate a default folder to each group.
+  ADD <pino> tooltips and what's this for settings
+  ADD <pino> implement the notifications
+  ADD <dario> add a wizard on the first app execution, where the user can set
+      his download folders and other "vital" settings like the integration with
+      Konqueror. Perhaps we could provide a good default like ~/downloads/.
+  ADD <pino> make the sidebar capable of several sizes for its items (16, 22,
+      32, ...)
+
+LONG-TERM:
+
+  ADD <kget> make the TestView able to make intensive tests on kget by
+      giving commands to the Scheduler and looking if what happens is what should
+      happen.
+  CHG <dario> usability enhancements as in #79519, #89379, #111407
+  ADD <dario> sidebar for transfer statistics and more (bandwidth
+      graph, alternative urls, connection status/type, virtual folders,
+      ...)
+  ADD <kget> add bandwidth limiting (#87600)
+  ADD <kget> splits download in N segments (#62371)
+  ADD <kget> support for mirrors (#62371)
+  ADD <dario> 'low priority downloads' as in br #50776.
+  ADD <kget> add Help & Guide
+  ADD <uwolfer> show average transfer speed when finished (#49219)
+  ADD <uwolfer> resume option when there is a file with the same name (#51450)
+  ADD <uwolfer> preserve timestamp of downloaded files (as option) (#55511)
+  ADD <uwolfer> recursion and other wget features (#57105)
+  ADD <uwolfer> make KGets handling of many downloads smarter 
+      (maximum number of open connections per server) (#57248)
+  ADD <uwolfer> check there is enough space left before downloading file (#57373)
+  ADD <uwolfer> save referer page for downloads (#60946)
+  ADD <uwolfer> built-in signature verification support (#61397)
+  ADD <uwolfer> right-click menu to change file properties 
+      (filename, destination directory, url) (#72534, 82923)
+  ADD <uwolfer> add support for mms:// protocol (#96386)
+  ADD <uwolfer> add valid download time frame, global or individual (#109377)
+
+
+        DONE
+---------------------
+
+
+  Things done until 21/01/2005
+
+  CHG <dario, eros> decoupling between gui and transfer operations.
+  ADD <dario> Implement the MainView class that should become the kget main view.
+  CHG <dario> Transfer object rewrite to make it easily inherited from 
+      new kind of transfers.
+  ADD <dario> TransferKio. The first transfer realized using kioSlaves
+  CHG <dario> Scheduler logic enhancement (there are still lots of things to do)
+  ADD <dario> groups support and notifies to the views.
+  ADD <dario> systray icon with blinking overlay.
+  CHG <eros> Move all the configuration framework to KConfigXT
+  CHG <dario> implement delayedInitialization of the kget app. This should speed up
+      the startup a lot with big lists of transfers.
+  FIX <dario> the konqueror plugin doesn't allow the download of links if 
+      the relative web page has been closed
+  FIX <pino> make more fluid the drop target movement
+  FIX <dario> handle SideBar resizing correctly
+  CHG <dario> finish to implement transferKio adding, for example, setDelay.
+  FIX <dario> (JJ) fix crash when resuming an already running transfer. The 
+      solution should be to check for this case in Scheduler::slotSetCommand
+      by calling the info() function on the transfer and checking if its status
+      is St_Trying or St_Running. In this case we should do nothing.
+  FIX <dario> (JJ) fixed Sidebar crash.
+  FIX <dario> fixed 'stop on transfer' crash
+  FIX <enrico> Optimized color scheme change (rebuilds pixmaps, droptarget,
+      etc) and pixmap deletion (leakfix)
+  CHG <enrico> disabled internal segv hander to show backtraces on crash
+  ADD <dario> make it possible to move transfers to a specific group using
+      the popup menu.
+
+  Things done after the big architecture rewrite
+
+  CHG <dario> rename the KMainWidget class (that IMHO is a rather confusing name)
+      to MainWindow (KGet? KGetWindow?)
+  ADD <dario> add the possibility to select "open destination folder" in 
+      the transfer's popup menu.
+
+IDEAS:
+   * Use the single transfer dialog to display transfer property, progress and
+     to set up advanced options of a transfer, like its splitting into chuncks.
+
+
+DISCUSSING:
+   * Remember to move downloaded Transfers in a black-list that will be
+     deleted when program exits. So old pointers to downloaded items are
+     still valid when the transfer ends.
 

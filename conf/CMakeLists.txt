@@ -1,0 +1,1 @@
+install(FILES kget.kcfg DESTINATION ${KCFG_INSTALL_DIR})

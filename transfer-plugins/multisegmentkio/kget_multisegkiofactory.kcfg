@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kcfg SYSTEM "http://www.kde.org/standards/kcfg/1.0/kcfg.dtd">
+<kcfg>
+  <kcfgfile name="kget_multisegkiofactory.rc"/>
+  <group name="Segments">
+    <entry name="Segments" type="Int">
+      <default>5</default>
+    </entry>
+    <entry name="SplitSize" type="Int">
+      <default>50</default>
+    </entry>
+    <entry name="SaveSegEvery" type="Int">
+      <default>200</default>
+    </entry>
+  </group>
+  <group name="SearchEngines">
+    <entry name="UseSearchEngines" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="SearchEnginesNameList" type="StringList" key="NameItems">
+      <label>List of the available search engines</label>
+      <default>filemirrors</default>
+    </entry>
+    <entry name="SearchEnginesUrlList" type="StringList" key="UrlItems">
+      <label>Urls list of the available search engines</label>
+      <default>http://www.filemirrors.com/search.src?</default>
+    </entry>
+  </group>
+</kcfg>

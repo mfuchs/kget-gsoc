@@ -1,30 +1,17 @@
-                          KGet 0.8.0-RC-1
-			 					             ==========
+KGET README
 
-New working  release of  kget for  kde3.
+A KDE4 environment is required for KGet2.
+http://edu.kde.org/development/port2kde4.php
 
-INSTALLATION
-=============
-checkout the admin directory from kde-common then:
-cd kget
-ln -s  kde-common/admin .
-make -f Makefile.cvs
-./configure --disable-debug --enable-mt
+How to download and install KGet2:
+
+svn co svn://anonsvn.kde.org/home/kde/branches/work/make_kget_cool
+cd make_kget_cool
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/kde4 ..
 make
 make install
 
-BUGS
-=====
- Please report all bugs to pch@freeshell.org
 
-TODO
-=====
- o Download segments
-
-
-Happy downloading
-
-____________
-Patrick  Charbonnier
-E-mail: pch@freeshell.org
-
+kget @ kde.org
