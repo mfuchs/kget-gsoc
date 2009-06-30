@@ -10,7 +10,6 @@
 
 #include "transferdetails.h"
 
-#include "ui_transferdetailsfrm.h"
 #include "core/kget.h"
 
 #include <klocale.h>
@@ -23,10 +22,9 @@ TransferDetails::TransferDetails(TransferHandler * transfer)
 {
     m_genericWidget = new QWidget(this);
 
-    Ui::TransferDetailsFrm frm;
     frm.setupUi(m_genericWidget);
 
-    m_detailsWidget = KGet::factory(transfer)->createDetailsWidget(transfer);
+    m_detailsWidget = KGet::factory(m_transfer)->createDetailsWidget(m_transfer);
 
     m_layout = new QVBoxLayout(this);
     m_layout->addWidget(m_genericWidget);
@@ -34,23 +32,12 @@ TransferDetails::TransferDetails(TransferHandler * transfer)
         m_layout->addWidget(m_detailsWidget);
     setLayout(m_layout);
 
-    frm.sourceLabel->setText(i18nc("@label transfer source", "Source:"));
-    frm.destLabel->setText(i18n("Saving to:"));
-    frm.statusLabel->setText(i18n("Status:"));
+    frm.sourceContentEdit->setText(m_transfer->source().prettyUrl());
+    frm.destContentEdit->setText(m_transfer->dest().prettyUrl());
 
-    frm.sourceContentEdit->setText(transfer->source().prettyUrl());
-    frm.destContentEdit->setText(transfer->dest().prettyUrl());
-
-    m_statusPixmapLabel = frm.statusPixmapContentLabel;
-    m_statusTextLabel = frm.statusTextContentLabel;
-    m_completedLabel = frm.completedContentLabel;
-    m_speedLabel = frm.speedContentLabel;
-    m_progressBar = frm.progressBar;
-    m_remainingTimeLabel = frm.remainingTimeLabel;
-
-    transfer->addObserver(this);
+    m_transfer->addObserver(this);
     //This updates the widget with the right values
-    transferChangedEvent(transfer);
+    transferChangedEvent(m_transfer);
 }
 
 TransferDetails::~TransferDetails()
@@ -65,18 +52,18 @@ void TransferDetails::transferChangedEvent(TransferHandler * transfer)
 
     if(transferFlags & Transfer::Tc_Status)
     {
-        m_statusPixmapLabel->setPixmap(m_transfer->statusPixmap());
-        m_statusTextLabel->setText(m_transfer->statusText());
+        frm.statusPixmapContentLabel->setPixmap(m_transfer->statusPixmap());
+        frm.statusTextContentLabel->setText(m_transfer->statusText());
     }
 
     if((transferFlags & Transfer::Tc_TotalSize) || (transferFlags & Transfer::Tc_DownloadedSize))
     {
-        m_completedLabel->setText(i18n("%1 of %2", KIO::convertSize(m_transfer->downloadedSize()), KIO::convertSize(m_transfer->totalSize())));
+        frm.completedContentLabel->setText(i18n("%1 of %2", KIO::convertSize(m_transfer->downloadedSize()), KIO::convertSize(m_transfer->totalSize())));
     }
 
     if(transferFlags & Transfer::Tc_Percent)
     {
-        m_progressBar->setValue(m_transfer->percent());
+        frm.progressBar->setValue(m_transfer->percent());
     }
 
     if(transferFlags & Transfer::Tc_DownloadSpeed)
@@ -86,14 +73,14 @@ void TransferDetails::transferChangedEvent(TransferHandler * transfer)
         if(speed==0)
         {
             if(m_transfer->status() == Job::Running)
-                m_speedLabel->setText(i18n("Stalled") );
+                frm.speedContentLabel->setText(i18n("Stalled") );
             else
-                m_speedLabel->setText(QString());
+                frm.speedContentLabel->setText(QString());
         }
         else
-            m_speedLabel->setText(i18n("%1/s", KIO::convertSize(speed)));
+            frm.speedContentLabel->setText(i18n("%1/s", KIO::convertSize(speed)));
     }
-    m_remainingTimeLabel->setText(KIO::convertSeconds(m_transfer->remainingTime()));
+    frm.remainingTimeLabel->setText(KIO::convertSeconds(m_transfer->remainingTime()));
 
     m_transfer->resetChangesFlags(this);
 }
