@@ -87,6 +87,7 @@ set(kgetcore_SRCS
    core/download.cpp
    core/transferhistorystore.cpp
    core/linkimporter.cpp
+   core/filemodel.cpp
 )
 
 if(HAVE_NEPOMUK)

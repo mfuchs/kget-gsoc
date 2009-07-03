@@ -249,6 +249,11 @@ class KGET_EXPORT TransferHandler : public Handler
          */
         QList<QAction*> factoryActions();
 
+        /**
+         * @returns a pointer to the FileModel containing all files of this download
+         */
+        virtual FileModel * fileModel() {return m_transfer->fileModel();}
+
 #ifdef HAVE_NEPOMUK
         /**
          * Sets the NepomukHandler for the transfer
