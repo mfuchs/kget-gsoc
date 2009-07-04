@@ -71,6 +71,9 @@ void TransferKio::postDeleteEvent()
         KIO::Job *del = KIO::del(m_dest.path() + ".part", KIO::HideProgressInfo);
         KIO::NetAccess::synchronousRun(del, NULL);
     }//TODO: Ask the user if he/she wants to delete the *.part-file? To discuss (boom1992)
+#ifdef HAVE_NEPOMUK
+    nepomukHandler()->postDeleteEvent();
+#endif //HAVE_NEPOMUK
 }
 
 void TransferKio::load(const QDomElement &e)
