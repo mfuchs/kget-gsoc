@@ -168,6 +168,12 @@ set(kget_SRCS ${kget_adaptor_SRCS}
    ui/linkview/kget_sortfilterproxymodel.cpp
    ui/mirror/mirrorsettings.cpp
    ui/mirror/mirrormodel.cpp
+   ui/metalinkcreator/metalinkcreator.cpp
+   ui/metalinkcreator/metalinker.cpp
+   ui/metalinkcreator/filedlg.cpp
+   ui/metalinkcreator/localemodels.cpp
+   ui/metalinkcreator/dragdlg.cpp
+   ui/metalinkcreator/urlwidget.cpp
    tests/testkget.cpp
    mainwindow.cpp
    main.cpp
@@ -206,6 +212,13 @@ kde4_add_ui_files(kget_SRCS
    ui/transfersettingsdialog.ui
    ui/linkview/importlinkdialog.ui
    ui/mirror/mirrorsettings.ui
+   ui/metalinkcreator/introduction.ui
+   ui/metalinkcreator/general.ui
+   ui/metalinkcreator/general2.ui
+   ui/metalinkcreator/files.ui
+   ui/metalinkcreator/filedlg.ui
+   ui/metalinkcreator/dragdlg.ui
+   ui/metalinkcreator/urlwidget.ui
 )
 
 if(HAVE_NEPOMUK)
