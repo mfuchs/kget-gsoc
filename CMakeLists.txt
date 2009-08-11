@@ -166,6 +166,8 @@ set(kget_SRCS ${kget_adaptor_SRCS}
    ui/history/transferhistorycategorizedview.cpp
    ui/linkview/kget_linkview.cpp
    ui/linkview/kget_sortfilterproxymodel.cpp
+   ui/mirror/mirrorsettings.cpp
+   ui/mirror/mirrormodel.cpp
    tests/testkget.cpp
    mainwindow.cpp
    main.cpp
@@ -203,6 +205,7 @@ kde4_add_ui_files(kget_SRCS
    ui/groupsettingsdialog.ui
    ui/transfersettingsdialog.ui
    ui/linkview/importlinkdialog.ui
+   ui/mirror/mirrorsettings.ui
 )
 
 if(HAVE_NEPOMUK)
