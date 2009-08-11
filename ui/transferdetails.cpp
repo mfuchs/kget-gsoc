@@ -82,6 +82,11 @@ void TransferDetails::transferChangedEvent(TransferHandler * transfer)
     }
     frm.remainingTimeLabel->setText(KIO::convertSeconds(m_transfer->remainingTime()));
 
+    if(transferFlags & Transfer::Tc_FileName)
+    {
+        frm.destContentEdit->setText(m_transfer->dest().prettyUrl());
+    }
+
     m_transfer->resetChangesFlags(this);
 }
 

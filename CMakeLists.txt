@@ -174,6 +174,8 @@ set(kget_SRCS ${kget_adaptor_SRCS}
    ui/metalinkcreator/localemodels.cpp
    ui/metalinkcreator/dragdlg.cpp
    ui/metalinkcreator/urlwidget.cpp
+   ui/renamefile.cpp
+   ui/verificationdialog.cpp
    tests/testkget.cpp
    mainwindow.cpp
    main.cpp
@@ -219,6 +221,8 @@ kde4_add_ui_files(kget_SRCS
    ui/metalinkcreator/filedlg.ui
    ui/metalinkcreator/dragdlg.ui
    ui/metalinkcreator/urlwidget.ui
+   ui/renamefile.ui
+   ui/verificationdialog.ui
 )
 
 if(HAVE_NEPOMUK)

@@ -15,6 +15,8 @@
 #include <KDialog>
 
 class TransferHandler;
+class FileModel;
+class RenameFile;
 
 class TransferSettingsDialog : public KDialog
 {
@@ -24,10 +26,16 @@ class TransferSettingsDialog : public KDialog
         ~TransferSettingsDialog();
 
     private slots:
+        void slotMirrors();
+        void slotRename();
+        void slotVerification();
+        void slotSelectionChanged();
+        void slotFinished();
         void save();
 
     private:
         TransferHandler* m_transfer;
+        FileModel *m_model;
         Ui::TransferSettingsDialog ui;
 };
 

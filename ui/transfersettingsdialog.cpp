@@ -8,12 +8,21 @@
    version 2 of the License, or (at your option) any later version.
 */
 #include "transfersettingsdialog.h"
+#include "mirror/mirrorsettings.h"
+#include "renamefile.h"
+#include "verificationdialog.h"
 
 #include "core/transferhandler.h"
+#include "core/filemodel.h"
+
+#include <KMessageBox>
+#include <KLineEdit>
+#include <QSortFilterProxyModel>
 
 TransferSettingsDialog::TransferSettingsDialog(QWidget *parent, TransferHandler *transfer)
   : KDialog(parent),
-    m_transfer(transfer)
+    m_transfer(transfer),
+    m_model(m_transfer->fileModel())
 {
     setCaption(i18n("Transfer Settings for %1", m_transfer->source().fileName()));
     showButtonSeparator(true);
@@ -26,6 +35,23 @@ TransferSettingsDialog::TransferSettingsDialog(QWidget *parent, TransferHandler 
     ui.downloadCheck->setChecked(ui.downloadSpin->value() != 0);
     ui.uploadCheck->setChecked(ui.uploadSpin->value() != 0);
     ui.ratioCheck->setChecked(ui.ratioSpin->value() != 0);
+    ui.kUrlRequester->setUrl(m_transfer->directory().pathOrUrl());
+    ui.kUrlRequester->lineEdit()->setReadOnly(true);
+    ui.kUrlRequester->setMode(KFile::Directory | KFile::ExistingOnly);
+    ui.mirrors->setEnabled(false);
+    ui.rename->setIcon(KIcon("edit-rename"));
+    ui.rename->setEnabled(false);
+    ui.verification->setEnabled(false);
+
+    if (m_model)
+    {
+        m_model->watchCheckState();
+//         QSortFilterProxyModel *proxy = new QSortFilterProxyModel(this);
+//         proxy->setSourceModel(m_model);
+//         ui.treeView->setModel(proxy);
+        ui.treeView->setModel(m_model);
+//         ui.treeView->sortByColumn(0, Qt::AscendingOrder);
+    }
 
     if (!transfer->supportsSpeedLimits())
     {
@@ -37,14 +63,64 @@ TransferSettingsDialog::TransferSettingsDialog(QWidget *parent, TransferHandler 
         ui.ratioSpin->setDisabled(true);
     }
     connect(this, SIGNAL(accepted()), SLOT(save()));
+    connect(this, SIGNAL(finished()), this, SLOT(slotFinished()));
+    connect(ui.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(slotSelectionChanged()));
+    connect(ui.rename, SIGNAL(clicked(bool)), this, SLOT(slotRename()));
+    connect(ui.mirrors, SIGNAL(clicked(bool)), this, SLOT(slotMirrors()));
+    connect(ui.verification, SIGNAL(clicked(bool)), this, SLOT(slotVerification()));
 }
 
 TransferSettingsDialog::~TransferSettingsDialog()
 {
 }
 
+void TransferSettingsDialog::slotMirrors()
+{
+    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    KDialog *mirrors = new MirrorSettings(this, m_transfer, m_model->getUrl(index));
+    mirrors->show();
+}
+
+void TransferSettingsDialog::slotRename()
+{
+    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    RenameFile *renameDlg = new RenameFile(m_model, index, this);
+    renameDlg->show();
+}
+
+void TransferSettingsDialog::slotVerification()
+{
+    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    KDialog *verification = new VerificationDialog(this, m_transfer, m_model->getUrl(index));
+    verification->show();
+}
+
+void TransferSettingsDialog::slotSelectionChanged()
+{
+    bool enabled = false;
+    //only enable rename when one item is selected and when this item is a file
+    if (ui.treeView->selectionModel()->selectedRows().count() == 1)
+    {
+        QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+        if (index.isValid() && !(static_cast<FileItem*>(index.internalPointer()))->childCount())
+        {
+            enabled = true;
+        }
+    }
+    ui.mirrors->setEnabled(enabled);
+    ui.rename->setEnabled(enabled);
+    ui.verification->setEnabled(enabled);
+}
+
 void TransferSettingsDialog::save()
 {//TODO: Set to -1 when no limit
+    KUrl oldDirectory = m_transfer->directory();
+    KUrl newDirectory = ui.kUrlRequester->url();
+    if ((oldDirectory != newDirectory) && !m_transfer->setDirectory(newDirectory))
+    {
+        KMessageBox::error(this, i18n("Changing the destination did not work, the destination stays unmodified."), i18n("Destination unmodified"));
+    }
+
     if (ui.downloadCheck->isChecked())
         m_transfer->setDownloadLimit(ui.downloadSpin->value(), Transfer::VisibleSpeedLimit);
     else
@@ -59,6 +135,14 @@ void TransferSettingsDialog::save()
         m_transfer->setMaximumShareRatio(ui.ratioSpin->value());
     else
         m_transfer->setMaximumShareRatio(0);
+}
+
+void TransferSettingsDialog::slotFinished()
+{
+    if (m_model)
+    {
+        m_model->stopWatchCheckState();
+    }
 }
 
 #include "transfersettingsdialog.moc"
