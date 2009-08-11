@@ -38,18 +38,11 @@ Transfer::Transfer(TransferGroup * parent, TransferFactory * factory,
       m_uploadLimit(0), m_downloadLimit(0), m_isSelected(false),
       m_visibleUploadLimit(0), m_visibleDownloadLimit(0), m_ratio(0),
       m_handler(0), m_factory(factory)
-{
 #ifdef HAVE_NEPOMUK
-    m_nepomukHandler = new NepomukHandler(this, 0);
+      , m_nepomukHandler(0)
 #endif
-
-    if( e )
-        load( *e );
-    else
-    {
-        setStatus(status(), i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
-        setStartStatus(status());
-    }
+{
+    Q_UNUSED(e)
 }
 
 Transfer::~Transfer()
@@ -65,6 +58,28 @@ Transfer::~Transfer()
     delete(m_nepomukHandler);
 #endif
 }
+
+void Transfer::init()//TODO think about e, maybe not have it at all in the constructor?
+{
+#ifdef HAVE_NEPOMUK
+    if (!m_nepomukHandler)
+    {
+        m_nepomukHandler = new NepomukHandler(this, 0);
+    }
+#endif
+}
+
+#ifdef HAVE_NEPOMUK
+void Transfer::setNepomukHandler(NepomukHandler *handler)
+{
+    if (m_nepomukHandler)
+    {
+        delete(m_nepomukHandler);
+        m_nepomukHandler = 0;
+    }
+    m_nepomukHandler = handler;
+}
+#endif //HAVE_NEPOMUK
 
 int Transfer::elapsedTime() const
 {
@@ -199,8 +214,17 @@ void Transfer::save(const QDomElement &element)
     e.setAttribute("Policy", policy() == Job::Start ? "Start" : (policy() == Job::Stop ? "Stop" : "None"));
 }
 
-void Transfer::load(const QDomElement &e)
+void Transfer::load(const QDomElement *element)
 {
+    if (!element)
+    {
+        setStatus(status(), i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
+        setStartStatus(status());
+        return;
+    }
+
+    const QDomElement e = *element;
+
     m_source = KUrl(e.attribute("Source"));
     m_dest = KUrl(e.attribute("Dest"));
 

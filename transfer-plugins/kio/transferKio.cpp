@@ -76,17 +76,6 @@ void TransferKio::postDeleteEvent()
 #endif //HAVE_NEPOMUK
 }
 
-void TransferKio::load(const QDomElement &e)
-{
-    Transfer::load(e);
-}
-
-void TransferKio::save(const QDomElement &e)
-{
-    Transfer::save(e);
-}
-
-
 //NOTE: INTERNAL METHODS
 
 void TransferKio::createJob()
