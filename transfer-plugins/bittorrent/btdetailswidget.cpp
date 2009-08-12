@@ -73,6 +73,11 @@ void BTDetailsWidget::slotTransferChanged(TransferHandler * transfer, TransferHa
 
     if(flags & Transfer::Tc_Percent)
         progressBar->setValue(m_transfer->percent());
+
+    if(transferFlags & Transfer::Tc_FileName)
+        destEdit->setText(m_transfer->dest().prettyUrl());
+
+    m_transfer->resetChangesFlags(this);
 }
 
 void BTDetailsWidget::showEvent(QShowEvent * event)
