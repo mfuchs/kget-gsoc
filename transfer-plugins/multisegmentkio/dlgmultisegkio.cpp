@@ -25,6 +25,7 @@ DlgSettingsWidget::DlgSettingsWidget(QWidget *parent, const QVariantList &args)
     connect(ui.minSegSizeSpinBox, SIGNAL(valueChanged(int)), SLOT(changed()));
     connect(ui.saveDataSizeSpinBox, SIGNAL(valueChanged(int)), SLOT(changed()));
     connect(ui.enginesCheckBox, SIGNAL(clicked(bool)), SLOT(changed()));
+    connect(ui.verificationCheckBox, SIGNAL(clicked(bool)), SLOT(changed()));
 }
 
 DlgSettingsWidget::~DlgSettingsWidget()
@@ -33,11 +34,12 @@ DlgSettingsWidget::~DlgSettingsWidget()
 
 void DlgSettingsWidget::load()
 {
-    ui.numSegSpinBox->setValue( MultiSegKioSettings::segments() );
-    ui.minSegSizeSpinBox->setValue( MultiSegKioSettings::splitSize() );
-    ui.saveDataSizeSpinBox->setValue( MultiSegKioSettings::saveSegSize() );
+    ui.numSegSpinBox->setValue(MultiSegKioSettings::segments());
+    ui.minSegSizeSpinBox->setValue(MultiSegKioSettings::splitSize());
+    ui.saveDataSizeSpinBox->setValue(MultiSegKioSettings::saveSegSize());
 
     ui.enginesCheckBox->setChecked(MultiSegKioSettings::useSearchEngines());
+    ui.verificationCheckBox->setChecked(MultiSegKioSettings::useSearchVerification());
 }
 
 void DlgSettingsWidget::save()
@@ -47,6 +49,7 @@ void DlgSettingsWidget::save()
     MultiSegKioSettings::setSplitSize(ui.minSegSizeSpinBox->value());
     MultiSegKioSettings::setSaveSegSize(ui.saveDataSizeSpinBox->value());
     MultiSegKioSettings::setUseSearchEngines(ui.enginesCheckBox->isChecked());
+    MultiSegKioSettings::setUseSearchVerification(ui.verificationCheckBox->isChecked());
 
     MultiSegKioSettings::self()->writeConfig();
 }
