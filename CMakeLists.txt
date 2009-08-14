@@ -92,6 +92,7 @@ set(kgetcore_SRCS
    core/linkimporter.cpp
    core/filemodel.cpp
    core/verifier.cpp
+   core/kiodownload.cpp
 )
 
 if(HAVE_NEPOMUK)
