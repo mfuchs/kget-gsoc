@@ -33,9 +33,9 @@
    <item row="1" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <widget class="KIntNumInput" name="num_connections">
+      <widget class="KIntNumInput" name="preference">
        <property name="toolTip">
-        <string>Optional: The number of maximum paralel connections to the mirror.</string>
+        <string>Optional: The preference of the mirror, 1 lowest 100 highest.</string>
        </property>
        <property name="value">
         <number>0</number>
@@ -97,16 +97,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KPushButton</class>
-   <extends>QPushButton</extends>
-   <header>kpushbutton.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>KComboBox</class>
    <extends>QComboBox</extends>
    <header>kcombobox.h</header>
@@ -115,6 +105,16 @@
    <class>KIntNumInput</class>
    <extends>QWidget</extends>
    <header>knuminput.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KPushButton</class>
+   <extends>QPushButton</extends>
+   <header>kpushbutton.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -346,8 +346,9 @@ QHash<QUrl, Nepomuk::Variant> KGetMetalink::CommonData::properties() const
 
 void KGetMetalink::Metaurl::load(const QDomElement &e)
 {
-    preference = e.attribute("preference").toInt();
     type = e.attribute("type");
+    preference = e.attribute("preference").toInt();
+    name = e.attribute("name");
     url = KUrl(e.text());
 }
 
@@ -359,6 +360,10 @@ void KGetMetalink::Metaurl::save(QDomElement &e) const
     {
         metaurl.setAttribute("preference", preference);
     }
+    if (!name.isEmpty())
+    {
+        metaurl.setAttribute("name", name);
+    }
     metaurl.setAttribute("type", type);
 
     QDomText text = doc.createTextNode(url.url());
@@ -369,14 +374,14 @@ void KGetMetalink::Metaurl::save(QDomElement &e) const
 
 void KGetMetalink::Metaurl::clear()
 {
-    preference = 0;
     type.clear();
+    preference = 0;
+    name.clear();
     url.clear();
 }
 
 void KGetMetalink::Url::load(const QDomElement &e)
 {
-    maxconnections = e.attribute("maxconnections").toInt();//TODO still existing in the new draft? -- TAGSS?
     location = e.attribute("location");
     preference = e.attribute("preference").toInt();
     url = KUrl(e.text());
@@ -386,10 +391,6 @@ void KGetMetalink::Url::save(QDomElement &e) const
 {
     QDomDocument doc = e.ownerDocument();
     QDomElement elem = doc.createElement("url");
-    if (maxconnections)
-    {
-        elem.setAttribute("maxconnections", maxconnections);
-    }
     if (preference)
     {
         elem.setAttribute("preference", preference);
@@ -407,7 +408,6 @@ void KGetMetalink::Url::save(QDomElement &e) const
 
 void KGetMetalink::Url::clear()
 {
-    maxconnections = 0;
     preference = 0;
     location.clear();
     url.clear();
@@ -416,7 +416,6 @@ void KGetMetalink::Url::clear()
 void KGetMetalink::Resources::load(const QDomElement &e)
 {
     QDomElement res = e.firstChildElement("resources");
-    maxconnections = res.attribute("maxconnections").toInt();//TODO still existing in the new draft? -- TAGSS?
 
     for (QDomElement elem = res.firstChildElement("url"); !elem.isNull(); elem = elem.nextSiblingElement("url"))
     {
@@ -437,10 +436,6 @@ void KGetMetalink::Resources::save(QDomElement &e) const
 {
     QDomDocument doc = e.ownerDocument();
     QDomElement resources = doc.createElement("resources");
-    if (maxconnections)
-    {
-        resources.setAttribute("maxconnections", maxconnections);
-    }
 
     foreach (const Metaurl &metaurl, metaurls)
     {
@@ -457,7 +452,6 @@ void KGetMetalink::Resources::save(QDomElement &e) const
 
 void KGetMetalink::Resources::clear()
 {
-    maxconnections = 0;
     urls.clear();
     metaurls.clear();
 }
@@ -671,11 +665,6 @@ void KGetMetalink::Files::clear()
     files.clear();
 }
 
-bool KGetMetalink::Metalink::isDynamic() const
-{
-    return ((type == "dynamic") && !origin.isEmpty());
-}
-
 bool KGetMetalink::Metalink::isValid() const
 {
     return files.isValid();
@@ -688,22 +677,20 @@ QHash<QUrl, Nepomuk::Variant> KGetMetalink::Files::properties() const
 }
 #endif //HAVE_NEPOMUK
 
-QStringList KGetMetalink::Metalink::availableTypes()
-{
-    return QStringList() << "static" << "dynamic";
-}
-
-QStringList KGetMetalink::Metalink::availableTypesTranslated()
-{
-    return QStringList() << i18nc("means that the metalink is static, no updates forit", "static") << i18nc("dynamic in there can be updates for the metalink", "dynamic");
-}
-
 void KGetMetalink::Metalink::load(const QDomElement &e)
 {
     QDomDocument doc = e.ownerDocument();
     const QDomElement metalink = doc.firstChildElement("metalink");
 
-    type = metalink.attribute("type");
+    //NOTE Metalink 3.0 2nd ed compatibility
+    if (metalink.hasAttribute("type"))
+    {
+        dynamic = (metalink.attribute("type") == "dynamic");
+    }
+    else
+    {
+        dynamic = (metalink.firstChildElement("dynamic").text() == "true");
+    }
     xmlns = metalink.attribute("xmlns");
     origin = KUrl(metalink.firstChildElement("origin").text());
     generator = metalink.firstChildElement("generator").text();
@@ -803,9 +790,12 @@ QDomDocument KGetMetalink::Metalink::save() const
         elem.appendChild(text);
         metalink.appendChild(elem);
     }
-    if (!type.isEmpty())
+    if (dynamic)
     {
-        metalink.setAttribute("type", type);
+        QDomElement elem = doc.createElement("dynamic");
+        QDomText text = doc.createTextNode("true");
+        elem.appendChild(text);
+        metalink.appendChild(elem);
     }
     if (updated.isValid())
     {
@@ -822,7 +812,7 @@ QDomDocument KGetMetalink::Metalink::save() const
 
 void KGetMetalink::Metalink::clear()
 {
-    type.clear();
+    dynamic = false;
     xmlns.clear();
     published.clear();
     origin.clear();

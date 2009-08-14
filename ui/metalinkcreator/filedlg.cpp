@@ -51,7 +51,6 @@ FileDlg::FileDlg(KGetMetalink::File *file, const QStringList &currentFileNames, 
     ui.name->setText(m_file->name);
     ui.identity->setText(m_file->data.identity);
     ui.version->setText(m_file->data.version);
-    ui.used_urls->setValue(m_file->resources.maxconnections);
     ui.description->setText(m_file->data.description);
     ui.logo->setUrl(m_file->data.logo);
     ui.os->setText(m_file->data.os);
@@ -199,7 +198,6 @@ void FileDlg::slotOkClicked()
     m_file->size = ui.size->text().toLongLong();
     m_file->data.identity = ui.identity->text();
     m_file->data.version = ui.version->text();
-    m_file->resources.maxconnections = ui.used_urls->value();
     m_file->data.description = ui.description->text();
     m_file->data.logo = KUrl(ui.logo->text());
     m_file->data.os = ui.os->text();

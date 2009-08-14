@@ -211,6 +211,9 @@
        </item>
        <item row="5" column="1" colspan="2">
         <layout class="QFormLayout" name="formLayout_4">
+         <property name="fieldGrowthPolicy">
+          <enum>QFormLayout::ExpandingFieldsGrow</enum>
+         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_3">
            <property name="toolTip">
@@ -242,32 +245,6 @@
           <widget class="KLineEdit" name="version">
            <property name="showClearButton" stdset="0">
             <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>??Numbers of Mirrors to use:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="KIntNumInput" name="used_urls">
-           <property name="toolTip">
-            <string>Maximal used mirrors (at the same time)</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="minimum">
-            <number>0</number>
-           </property>
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="specialValueText">
-            <string>not specified</string>
            </property>
           </widget>
          </item>
@@ -528,11 +505,6 @@
    <header>kcombobox.h</header>
   </customwidget>
   <customwidget>
-   <class>KIntNumInput</class>
-   <extends>QWidget</extends>
-   <header>knuminput.h</header>
-  </customwidget>
-  <customwidget>
    <class>KLineEdit</class>
    <extends>QLineEdit</extends>
    <header>klineedit.h</header>
@@ -564,7 +536,6 @@
   <tabstop>used_hashes</tabstop>
   <tabstop>identity</tabstop>
   <tabstop>version</tabstop>
-  <tabstop>used_urls</tabstop>
   <tabstop>description</tabstop>
   <tabstop>logo</tabstop>
   <tabstop>language</tabstop>

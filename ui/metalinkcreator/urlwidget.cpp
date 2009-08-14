@@ -35,6 +35,7 @@ UrlWidget::UrlWidget(QObject *parent)
     m_mirrorModel = new MirrorModel(this);
     ui.used_mirrors->setModel(m_mirrorModel);
     ui.used_mirrors->hideColumn(MirrorItem::Used);
+    ui.used_mirrors->hideColumn(MirrorItem::Connections);
 
     ui.add_mirror->setGuiItem(KStandardGuiItem::add());
     ui.add_mirror->setEnabled(false);
@@ -70,7 +71,7 @@ void UrlWidget::init(KGetMetalink::Resources *resources, QSortFilterProxyModel *
 
     foreach (const KGetMetalink::Url &url, m_resources->urls)
     {
-        m_mirrorModel->addMirror(url.url, url.maxconnections, url.location);
+        m_mirrorModel->addMirror(url.url, url.preference, url.location);
     }
 
     //create the country selection
@@ -112,7 +113,7 @@ void UrlWidget::slotUrlChanged(const QString &text)
 void UrlWidget::slotAddMirror()
 {
     const QString countryCode = ui.location->itemData(ui.location->currentIndex()).toString();
-    m_mirrorModel->addMirror(KUrl(ui.url->text()), ui.num_connections->value(), countryCode);
+    m_mirrorModel->addMirror(KUrl(ui.url->text()), ui.preference->value(), countryCode);
     ui.used_mirrors->resizeColumnToContents(1);
     ui.used_mirrors->resizeColumnToContents(2);
 
@@ -137,7 +138,7 @@ void UrlWidget::save()
         {
             KGetMetalink::Url url;
             url.url = KUrl(m_mirrorModel->index(i, MirrorItem::Url).data(Qt::UserRole).toUrl());
-            url.maxconnections = m_mirrorModel->index(i, MirrorItem::Connections).data(Qt::UserRole).toInt();
+            url.preference = m_mirrorModel->index(i, MirrorItem::Preference).data(Qt::UserRole).toInt();
             url.location = m_mirrorModel->index(i, MirrorItem::Country).data(Qt::UserRole).toString();
             m_resources->urls.append(url);
         }

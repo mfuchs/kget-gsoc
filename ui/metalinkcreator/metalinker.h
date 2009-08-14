@@ -108,7 +108,7 @@ class CommonData
         QString description;
         QString os;
         KUrl logo;
-        QString language;//TODO use different type?
+        QString language;
         UrlText publisher;
         QString copyright;
         UrlText license;
@@ -124,8 +124,19 @@ class Metaurl
 
         void clear();
 
-        int preference;
         QString type;
+
+        /**
+         * the preference of the urls, 100 is highest priority, 1 lowest
+         * default is 0 as in not set
+         */
+        int preference;
+
+        /**
+         * Optional the name of a file that should be get of that metaurl
+         */
+        QString name;
+
         KUrl url;
 };
 
@@ -133,7 +144,7 @@ class Url
 {
     public:
         Url()
-          : maxconnections(0), preference(0)
+          : preference(0)
           {
           }
 
@@ -145,24 +156,18 @@ class Url
         void clear();
 
         /**
-        * the maximum connections allowed to that specific server
-        * 1 means only one url can be used, default is 0 as in not set
-        */
-        int maxconnections;
-
-        /**
-        * the preference of the urls, 100 is highest priority, 1 lowest
-        * default is 0 as in not set
-        */
+         * the preference of the urls, 100 is highest priority, 1 lowest
+         * default is 0 as in not set
+         */
         int preference;
 
         /**
-        * the location of the server eg. "uk"
-        */
+         * the location of the server eg. "uk"
+         */
         QString location;
 
         KUrl url;
-//         QString type;//TODO compatibility??? check if bitorrent and then modify to Metadata?
+//TODO compatibility??? check if bitorrent and then modify to Metadata?
 };
 
 class Resources
@@ -176,12 +181,6 @@ class Resources
         void save(QDomElement &e) const;
 
         void clear();
-
-        /**
-        * the maximum connections allowed to the resources
-        * 1 means only one url can be used, default is 0
-        */
-        int maxconnections;
 
         QList<Url> urls;
         QList<Metaurl> metaurls;
@@ -276,7 +275,10 @@ class Files
 class Metalink
 {
     public:
-        Metalink() {}
+        Metalink()
+          : dynamic(false)
+        {
+        }
 
         /**
          * checks if the minimum requirements of a metalink are met
@@ -294,15 +296,7 @@ class Metalink
 
         void clear();
 
-        /**
-         * Returns true if the metalink is dynamic and if an origin has been set
-         */
-        bool isDynamic() const;
-
-        static QStringList availableTypes();
-        static QStringList availableTypesTranslated();
-
-        QString type;
+        bool dynamic;
         QString xmlns; //the xmlns value is ignored when saving, instead the data format described in the specification is always used
         DateConstruct published;
         KUrl origin;

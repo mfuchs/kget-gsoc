@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>564</width>
-    <height>550</height>
+    <height>604</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,17 +27,14 @@
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="labelType">
+      <widget class="QLabel" name="labelDynamic">
        <property name="toolTip">
         <string>Dynamic means that updated metalinks can be found at &quot;Origin&quot;.</string>
        </property>
        <property name="text">
-        <string>Type:</string>
+        <string>Dynamic:</string>
        </property>
       </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="KComboBox" name="type"/>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_3">
@@ -134,6 +131,13 @@
       <widget class="KLineEdit" name="origin">
        <property name="clickMessage">
         <string>Web-Url to the metalink</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="dynamic">
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </item>
@@ -324,11 +328,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>KComboBox</class>
    <extends>QComboBox</extends>
    <header>kcombobox.h</header>
@@ -337,6 +336,11 @@
    <class>KDateTimeWidget</class>
    <extends>QWidget</extends>
    <header>kdatetimewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

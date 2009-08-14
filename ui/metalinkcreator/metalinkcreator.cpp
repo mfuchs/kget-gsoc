@@ -334,23 +334,13 @@ void MetalinkCreator::createGeneral()
     QWidget *widget = new QWidget(this);
     uiGeneral.setupUi(widget);
 
-    uiGeneral.type->setToolTip(uiGeneral.labelType->toolTip());
-
+    uiGeneral.dynamic->setToolTip(uiGeneral.labelDynamic->toolTip());
     uiGeneral.language->setModel(m_languageSort);
 
     uiGeneral.publishedoffset->setEnabled(false);
     uiGeneral.publishedWidget->setEnabled(false);
     uiGeneral.updatedoffset->setEnabled(false);
     uiGeneral.updatedWidget->setEnabled(false);
-
-    //create the type combobox
-    const QStringList availableTypes = KGetMetalink::Metalink::availableTypes();
-    const QStringList availableTypesTranslated = KGetMetalink::Metalink::availableTypesTranslated();
-    for (int i = 0; i < availableTypes.count(); ++i)
-    {
-        uiGeneral.type->addItem(availableTypesTranslated.value(i), availableTypes.value(i));
-    }
-    uiGeneral.type->setCurrentIndex(0);
 
     m_general = addPage(widget, i18n("General optional information for the metalink."));
 }
@@ -364,9 +354,7 @@ void MetalinkCreator::loadGeneral()
     uiGeneral.logo->setUrl(metalink.files.data.logo);
     uiGeneral.os->setText(metalink.files.data.os);
 
-    int indexType = uiGeneral.type->findData(metalink.type);
-    indexType = (indexType == -1) ? 0 : indexType;//no negative index allowed here
-    uiGeneral.type->setCurrentIndex(indexType);
+    uiGeneral.dynamic->setChecked(metalink.dynamic);
 
     const int indexLanguage = uiGeneral.language->findData(metalink.files.data.language);
     uiGeneral.language->setCurrentIndex(indexLanguage);
@@ -425,7 +413,7 @@ void MetalinkCreator::saveGeneral()
     metalink.files.data.os = uiGeneral.os->text();
     metalink.files.data.identity = uiGeneral.identity->text();
 
-    metalink.type = uiGeneral.type->itemData(uiGeneral.type->currentIndex()).toString();
+    metalink.dynamic = uiGeneral.dynamic->isChecked();
 
     metalink.files.data.language = uiGeneral.language->itemData(uiGeneral.language->currentIndex()).toString();
 
