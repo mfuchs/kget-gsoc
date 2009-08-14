@@ -66,6 +66,13 @@ QWidget *MirrorDelegate::createEditor(QWidget *parent, const QStyleOptionViewIte
 
             return numConnections;
         }
+        else if (index.column() == MirrorItem::Preference)
+        {
+            QSpinBox *preference = new QSpinBox(parent);
+            preference->setRange(0, 100);
+
+            return preference;
+        }
         else if (index.column() == MirrorItem::Country)
         {
             if (m_countrySort)
@@ -97,6 +104,12 @@ void MirrorDelegate::setEditorData(QWidget *editor, const QModelIndex &index) co
             const int num = index.model()->data(index, Qt::EditRole).toInt();
             numConnections->setValue(num);
         }
+        else if (index.column() == MirrorItem::Preference)
+        {
+            QSpinBox *preference = static_cast<QSpinBox*>(editor);
+            const int num = index.model()->data(index, Qt::EditRole).toInt();
+            preference->setValue(num);
+        }
         else if (index.column() == MirrorItem::Country)
         {
             KComboBox *countrySort = static_cast<KComboBox*>(editor);
@@ -123,6 +136,11 @@ void MirrorDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, co
         {
             QSpinBox *numConnections = static_cast<QSpinBox*>(editor);
             model->setData(index, numConnections->value());
+        }
+        else if (index.column() == MirrorItem::Connections)
+        {
+            QSpinBox *preference = static_cast<QSpinBox*>(editor);
+            model->setData(index, preference->value());
         }
         else if (index.column() == MirrorItem::Country)
         {
@@ -184,6 +202,24 @@ QVariant MirrorItem::data(int column, int role) const
             return m_numConnections;
         }
     }
+    else if (column == MirrorItem::Preference)
+    {
+        if (role == Qt::DisplayRole)
+        {
+            if (m_preference)
+            {
+                return m_preference;
+            }
+            else
+            {
+                return i18n("not specified");
+            }
+        }
+        else if ((role == Qt::EditRole) || (role == Qt::UserRole))
+        {
+            return m_preference;
+        }
+    }
     else if (column == MirrorItem::Country)
     {
         if (role == Qt::DisplayRole)
@@ -215,6 +251,10 @@ Qt::ItemFlags MirrorItem::flags(int column) const
         flags |= Qt::ItemIsEditable;
     }
     else if (column == MirrorItem::Connections)
+    {
+        flags |= Qt::ItemIsEditable;
+    }
+    else if (column == MirrorItem::Preference)
     {
         flags |= Qt::ItemIsEditable;
     }
@@ -254,6 +294,11 @@ bool MirrorItem::setData(int column, const QVariant &value, int role)
     else if ((column == MirrorItem::Connections) && (role == Qt::EditRole))
     {
         m_numConnections = value.toInt();
+        return true;
+    }
+    else if ((column == MirrorItem::Preference) && (role == Qt::EditRole))
+    {
+        m_preference = value.toInt();
         return true;
     }
     else if ((column == MirrorItem::Country) && (role == Qt::EditRole))
@@ -313,7 +358,7 @@ int MirrorModel::columnCount(const QModelIndex &index) const
         return 0;
     }
 
-    return 4;
+    return 5;
 }
 
 QVariant MirrorModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -329,6 +374,8 @@ QVariant MirrorModel::headerData(int section, Qt::Orientation orientation, int r
             return i18nc("Mirror as in server, in url", "Mirror");
         case MirrorItem::Connections:
             return i18nc("Number of paralell connections to the mirror", "Connections");
+        case MirrorItem::Preference:
+            return i18nc("The preference of the mirror", "Preference");
         case MirrorItem::Country:
             return i18nc("Location = country", "Location");
         default:
@@ -391,7 +438,17 @@ bool MirrorModel::removeRows(int row, int count, const QModelIndex &parent)
     return true;
 }
 
-void MirrorModel::addMirror(const KUrl &url, int numConnections, const QString &countryCode)
+void MirrorModel::addMirror(const KUrl& url, int numConnecitons)
+{
+    addMirror(url, 0, numConnecitons, QString());
+}
+
+void MirrorModel::addMirror(const KUrl &url, int preference, const QString &countryCode)
+{
+    addMirror(url, 0, preference, countryCode);
+}
+
+void MirrorModel::addMirror(const KUrl& url, int numConnecitons, int preference, const QString& countryCode)
 {
     if (!url.isValid())
     {
@@ -414,7 +471,8 @@ void MirrorModel::addMirror(const KUrl &url, int numConnections, const QString &
     MirrorItem *item = new MirrorItem;
     m_data.append(item);
     item->setData(MirrorItem::Url, QVariant(url));
-    item->setData(MirrorItem::Connections, numConnections);
+    item->setData(MirrorItem::Connections, numConnecitons);
+    item->setData(MirrorItem::Preference, preference);
     item->setData(MirrorItem::Country, countryCode);
 
     emit endInsertRows();

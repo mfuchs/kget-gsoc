@@ -54,6 +54,7 @@ class MirrorItem
             Used = 0,
             Url,
             Connections,
+            Preference,
             Country
         };
 
@@ -65,6 +66,7 @@ class MirrorItem
         KUrl m_url;
         Qt::CheckState m_checked;
         int m_numConnections;
+        int m_preference;
         QString m_countryCode;
         QString m_countryName;
         KIcon m_countryFlag;
@@ -86,9 +88,13 @@ class MirrorModel : public QAbstractTableModel
         bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
         bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
 
-        void addMirror(const KUrl &url, int numConnections, const QString &countryCode = QString());
+        void addMirror(const KUrl &url, int preference, const QString &countryCode);
+        void addMirror(const KUrl &url, int numConnecitons);
         void setMirrors(const QHash<KUrl, QPair<bool, int> > &mirrors);
         QHash<KUrl, QPair<bool, int> > availableMirrors() const;
+
+    private:
+        void addMirror(const KUrl &url, int numConnecitons, int preference, const QString &countryCode);
 
     private:
         QList<MirrorItem*> m_data;
