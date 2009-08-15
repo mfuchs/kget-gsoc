@@ -364,7 +364,14 @@ void metalink::processedSizeChanged()
         }
     }
 
-    m_percent = (m_downloadedSize * 100) / m_totalSize;
+    if (m_totalSize)
+    {
+        m_percent = (m_downloadedSize * 100) / m_totalSize;
+    }
+    else
+    {
+        m_percent = 0;
+    }
 
     Transfer::ChangesFlags flags = (Tc_DownloadedSize | Tc_Percent);
     setTransferChange(flags, true);
@@ -461,7 +468,7 @@ void metalink::slotStatus(DataSourceFactory::Status status)
                 QStringList brokenFiles;
                 foreach (DataSourceFactory *factory, m_dataSourceFactory)
                 {
-                    if (factory->doDownload() && (factory->verificationStatus() == DataSourceFactory::NotVerified))
+                    if (factory->doDownload() && (factory->verifier()->status() == Verifier::NotVerified))
                     {
                         brokenFiles.append(factory->dest().pathOrUrl());
                     }
@@ -501,7 +508,7 @@ bool metalink::repair(const KUrl &file)
         if (m_dataSourceFactory.contains(file))
         {
             DataSourceFactory *broken = m_dataSourceFactory[file];
-            if (broken->verificationStatus() == DataSourceFactory::NotVerified)
+            if (broken->verifier()->status() == Verifier::NotVerified)
             {
                 broken->repair();
                 return true;
@@ -513,7 +520,7 @@ bool metalink::repair(const KUrl &file)
         QList<DataSourceFactory*> broken;
         foreach (DataSourceFactory *factory, m_dataSourceFactory)
         {
-            if (factory->doDownload() && (factory->verificationStatus() == DataSourceFactory::NotVerified))
+            if (factory->doDownload() && (factory->verifier()->status() == Verifier::NotVerified))
             {
                 broken.append(factory);
             }
