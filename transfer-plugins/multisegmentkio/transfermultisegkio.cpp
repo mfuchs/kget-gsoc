@@ -120,6 +120,19 @@ bool TransferMultiSegKio::isResumable() const
     return true;
 }
 
+bool TransferMultiSegKio::repair(const KUrl &file)
+{
+    if (!file.isValid() || (m_dest == file))
+    {
+        if (m_dataSourceFactory && (m_dataSourceFactory->verificationStatus() == DataSourceFactory::NotVerified))
+        {
+            m_dataSourceFactory->repair();
+        }
+    }
+
+    return false;
+}
+
 bool TransferMultiSegKio::setDirectory(const KUrl& newDirectory)
 {
     KUrl newDest = newDirectory;

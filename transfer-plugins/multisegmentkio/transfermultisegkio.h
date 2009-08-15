@@ -34,6 +34,8 @@ class TransferMultiSegKio : public QObject, public Transfer
                     Scheduler * scheduler, const KUrl & src, const KUrl & dest,
                     const QDomElement * e = 0);
 
+        bool repair(const KUrl &file = KUrl());
+
         /**
          * Move the download to the new destination
          * @param newDirectory is a directory where the download should be stored
