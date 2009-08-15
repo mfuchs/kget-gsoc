@@ -19,7 +19,9 @@
 /**
  * This transfer uses the KIO class to download files
  */
- 
+
+class Verifier;
+
 class TransferKio : public QObject, public Transfer
 {
     Q_OBJECT
@@ -35,6 +37,10 @@ class TransferKio : public QObject, public Transfer
          * @returns true if newDestination can be used
          */
         virtual bool setDirectory(const KUrl &newDirectory);
+
+        bool repair(const KUrl &file = KUrl());
+
+        Verifier *verifier(const KUrl &file = KUrl());
 
     public slots:
         bool setNewDestination(const KUrl &newDestination);
@@ -61,6 +67,10 @@ class TransferKio : public QObject, public Transfer
         void slotProcessedSize( KJob * kioJob, qulonglong size );
         void slotSpeed( KJob * kioJob, unsigned long bytes_per_second );
         void newDestResult(KJob *result);
+
+    private:
+        Verifier *m_verifier;
+        bool m_broken;
 };
 
 #endif

@@ -12,14 +12,16 @@
 #ifdef HAVE_NEPOMUK
 #include "core/nepomukhandler.h"
 #endif //HAVE_NEPOMUK
+#include "core/verifier.h"
 
 #include <kiconloader.h>
 #include <kio/scheduler.h>
 #include <KIO/DeleteJob>
 #include <KIO/CopyJob>
 #include <KIO/NetAccess>
-#include <klocale.h>
-#include <kdebug.h>
+#include <KLocale>
+#include <KMessageBox>
+#include <KDebug>
 
 #include <QtCore/QFile>
 #include <QDomElement>
@@ -27,9 +29,12 @@
 TransferKio::TransferKio(TransferGroup * parent, TransferFactory * factory,
                          Scheduler * scheduler, const KUrl & source, const KUrl & dest,
                          const QDomElement * e)
-    : QObject(0),
-      Transfer(parent, factory, scheduler, source, dest, e),
-      m_copyjob(0), m_movingFile(false)
+  : QObject(0),
+    Transfer(parent, factory, scheduler, source, dest, e),
+    m_copyjob(0),
+    m_movingFile(false),
+    m_verifier(0),
+    m_broken(false)
 {
 
 }
@@ -57,6 +62,11 @@ bool TransferKio::setNewDestination(const KUrl &newDestination)
 #ifdef HAVE_NEPOMUK
             nepomukHandler()->setNewDestination(m_dest);
 #endif //HAVE_NEPOMUK
+
+            if (m_verifier)
+            {
+                m_verifier->setDestination(newDestination);
+            }
 
             KIO::Job *move = KIO::file_move(oldPath, KUrl(newDestination.path() + ".part"), -1, KIO::HideProgressInfo);
             connect(move, SIGNAL(result(KJob *)), this, SLOT(newDestResult(KJob *)));
@@ -174,6 +184,15 @@ void TransferKio::slotResult( KJob * kioJob )
     }
     // when slotResult gets called, the m_copyjob has already been deleted!
     m_copyjob=0;
+
+    if ((status() == Job::Finished) && verifier()->isVerifyable())
+    {
+        if (!verifier()->verify() && KMessageBox::warningYesNo(0, i18n("The download could not be verfied. Do you want to repair it?"), i18n("Verification failed.")))
+        {
+            m_broken = true;
+            repair();
+        }
+    }
     setTransferChange(Tc_Status, true);
 }
 
@@ -236,6 +255,41 @@ void TransferKio::slotSpeed( KJob * kioJob, unsigned long bytes_per_second )
 
     m_downloadSpeed = bytes_per_second;
     setTransferChange(Tc_DownloadSpeed, true);
+}
+
+bool TransferKio::repair(const KUrl &file)
+{
+    Q_UNUSED(file)
+
+    if (m_broken || (m_verifier->isVerifyable() && !m_verifier->verify()))
+    {
+        m_downloadedSize = 0;
+        m_percent = 0;
+        if(m_copyjob)
+        {
+            m_copyjob->kill(KJob::Quietly);
+            m_copyjob = 0;
+        }
+        setTransferChange(Tc_DownloadedSize | Tc_Percent, true);
+
+        start();
+
+        return true;
+    }
+
+    return false;
+}
+
+Verifier *TransferKio::verifier(const KUrl &file)
+{
+    Q_UNUSED(file)
+
+    if (!m_verifier)
+    {
+        m_verifier = new Verifier(m_dest);
+    }
+
+    return m_verifier;
 }
 
 #include "transferKio.moc"
