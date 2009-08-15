@@ -124,7 +124,7 @@ bool TransferMultiSegKio::repair(const KUrl &file)
 {
     if (!file.isValid() || (m_dest == file))
     {
-        if (m_dataSourceFactory && (m_dataSourceFactory->verificationStatus() == DataSourceFactory::NotVerified))
+        if (m_dataSourceFactory && (m_dataSourceFactory->verifier()->status() == Verifier::NotVerified))
         {
             m_dataSourceFactory->repair();
         }
