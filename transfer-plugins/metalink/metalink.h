@@ -46,6 +46,8 @@ class metalink : public QObject, public Transfer
          */
         int remainingTime() const;
 
+        bool repair(const KUrl &file = KUrl());
+
         /**
          * Move the download to the new destination
          * @param newDirectory is a directory where the download should be stored

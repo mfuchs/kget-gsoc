@@ -458,25 +458,20 @@ void metalink::slotStatus(DataSourceFactory::Status status)
                 setStatus(Job::Finished, i18nc("transfer state: finished", "Finished"), SmallIcon("dialog-ok"));
 
                 //see if some files are NotVerified
-                QList<DataSourceFactory*> broken;
                 QStringList brokenFiles;
                 foreach (DataSourceFactory *factory, m_dataSourceFactory)
                 {
                     if (factory->doDownload() && (factory->verificationStatus() == DataSourceFactory::NotVerified))
                     {
-                        broken.append(factory);
                         brokenFiles.append(factory->dest().pathOrUrl());
                     }
                 }
 
-                if (broken.count())
+                if (brokenFiles.count())
                 {
                     if (KMessageBox::warningYesNoCancelList(0, i18n("The cownload could not be verified, try to repair it?"), brokenFiles))
                     {
-                        foreach (DataSourceFactory *factory, broken)
-                        {
-                            factory->repair();
-                        }
+                        repair();
                     }
                 }
             }
@@ -497,6 +492,43 @@ void metalink::slotStatus(DataSourceFactory::Status status)
     {
         setTransferChange(flags, true);
     }
+}
+
+bool metalink::repair(const KUrl &file)
+{
+    if (file.isValid())
+    {
+        if (m_dataSourceFactory.contains(file))
+        {
+            DataSourceFactory *broken = m_dataSourceFactory[file];
+            if (broken->verificationStatus() == DataSourceFactory::NotVerified)
+            {
+                broken->repair();
+                return true;
+            }
+        }
+    }
+    else
+    {
+        QList<DataSourceFactory*> broken;
+        foreach (DataSourceFactory *factory, m_dataSourceFactory)
+        {
+            if (factory->doDownload() && (factory->verificationStatus() == DataSourceFactory::NotVerified))
+            {
+                broken.append(factory);
+            }
+        }
+        if (broken.count())
+        {
+            foreach (DataSourceFactory *factory, broken)
+            {
+                factory->repair();
+            }
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void metalink::load(const QDomElement *element)
