@@ -91,6 +91,14 @@ class KGET_EXPORT Transfer : public Job
          */
         virtual void init();
 
+        /**
+         * Tries to repair file
+         * @param file the file of a download that should be repaired,
+         * if not defined all files of a download are going to be repaird
+         * @return true if a repair started, false if it was not nescessary
+         */
+        virtual bool repair(const KUrl &file = KUrl()) {Q_UNUSED(file) return false;}
+
         const KUrl & source() const            {return m_source;}
         const KUrl & dest() const              {return m_dest;}
 
