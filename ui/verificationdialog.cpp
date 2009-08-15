@@ -149,9 +149,9 @@ void VerificationDialog::verifyPressed()
     {
         KMessageBox::information(this, i18n("The downloaded file was successfully verified."), i18n("Verification successful"));
     }
-    else
+    else if (KMessageBox::warningYesNo(this, i18n("The downloaded file could not be verified. Do you want to repair it?"), i18n("Verification failed")))
     {
-        KMessageBox::error(this, i18n("The downloaded file could not be verified."), i18n("Verification failed"));
+        m_transfer->repair(m_file);
     }
 }
 
