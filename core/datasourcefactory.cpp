@@ -72,7 +72,6 @@ DataSourceFactory::DataSourceFactory(const KUrl &dest, const KIO::filesize_t &si
     m_tempDownload(0),
     m_status(Stopped),
     m_statusBeforeMove(m_status),
-    m_verificationStatus(NoResult),
     m_verifier(0)
 {
     kDebug(5001) << "Initialize DataSourceFactory: Dest: " + m_dest.url() + "Size: " + QString::number(m_size) + "SegSize: " + QString::number(m_segSize);
@@ -101,7 +100,6 @@ DataSourceFactory::DataSourceFactory(QObject *parent)
     m_tempDownload(0),
     m_status(Stopped),
     m_statusBeforeMove(m_status),
-    m_verificationStatus(NoResult),
     m_verifier(0)
 {
     kDebug(5001) << "Initialize DataSourceFactory only with parrent";
@@ -715,6 +713,7 @@ void DataSourceFactory::killPutJob()
 {
     if (m_putJob)
     {
+        kDebug(5001) << "Closing the file";
         m_open = false;
         m_putJob->close();
         m_putJob->kill();
@@ -779,13 +778,13 @@ void DataSourceFactory::newDestResult(KJob *job)
 
 void DataSourceFactory::repair()
 {
-    if (m_verificationStatus != NotVerified)
+    if (verifier()->status() != Verifier::NotVerified)
     {
         return;
     }
 
     //FIXME crashes sometimes when the user waits too long to call repair (?), maybe because a TransferDataSource is not correctly deleted then, or some signals connect to non-existing (anymore) parts
-
+    m_finished = false;
     QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces = verifier()->brokenPieces();
     if (brokenPieces.isEmpty())
     {
@@ -864,25 +863,6 @@ void DataSourceFactory::load(const QDomElement *element)
         bool worked;
         m_maxMirrorsUsed = e.attribute("maxMirrorsUsed").toInt(&worked);
         m_maxMirrorsUsed = (worked ? m_maxMirrorsUsed : 3);
-    }
-    if (e.hasAttribute("verificationStatus"))
-    {
-        const int status = e.attribute("verificationStatus").toInt();
-        switch (status)
-        {
-            case NoResult:
-                m_verificationStatus = NoResult;
-                break;
-            case NotVerified:
-                m_verificationStatus = NotVerified;
-                break;
-            case Verified:
-                m_verificationStatus = Verified;
-                break;
-            default:
-                m_verificationStatus = NotVerified;
-                break;
-        }
     }
 
     //load the finishedChunks
@@ -981,12 +961,9 @@ void DataSourceFactory::changeStatus(DataSourceFactory::Status status, bool load
 
             if (!loaded && verifier()->isVerifyable())
             {
-                bool verified = verifier()->verify();
-                kDebug(5001) << "Download verified: " << verified;
-                m_verificationStatus = verified ? Verified : NotVerified;
+                kDebug(5001) << "Download verified: " << verifier()->verify();
                 emit statusChanged(m_status);
-                emit verificationStatusChanged(m_verificationStatus);
-                return;//TODO nicer!!
+                return;
             }
             break;
     }
@@ -1062,7 +1039,6 @@ void DataSourceFactory::save(const QDomElement &element)
     factory.setAttribute("size", m_size);
     factory.setAttribute("segementSize", m_segSize);
     factory.setAttribute("status", m_status);
-    factory.setAttribute("verificationStatus", m_verificationStatus);
     factory.setAttribute("doDownload", m_doDownload);
     factory.setAttribute("maxMirrorsUsed", m_maxMirrorsUsed);
 

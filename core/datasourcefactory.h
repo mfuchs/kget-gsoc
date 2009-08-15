@@ -101,13 +101,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
             Finished
         };
 
-        enum VerificationStatus
-        {
-            NoResult, //either not tried, or not enough information
-            NotVerified,
-            Verified
-        };
-
         /**
          * @return true if the DataSourceFactory has enough information to start a download
          */
@@ -199,8 +192,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         Status status() const {return m_status;}
 
-        VerificationStatus verificationStatus() const {return m_verificationStatus;}
-
         /**
          * Tries to repair a broken download, via completly redownloading it
          * or only the borken parts
@@ -216,7 +207,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
         void speed(ulong speed);
         void percent(ulong percent);
         void statusChanged(DataSourceFactory::Status status);
-        void verificationStatusChanged(DataSourceFactory::VerificationStatus verification);
 
     public slots:
         void save(const QDomElement &element);
@@ -314,7 +304,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
         KioDownload *m_tempDownload;
         Status m_status;
         Status m_statusBeforeMove;
-        VerificationStatus m_verificationStatus;
 
         Verifier *m_verifier;
 };
