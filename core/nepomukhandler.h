@@ -49,6 +49,8 @@ class KGET_EXPORT NepomukHandler : public QObject
 
         /**
          * Removes the resource if the isValid() is false
+         * @note call this method at the end of the postDeleteEvent of the transfer,
+         * otherwise it might not work correctly
          */
         virtual void postDeleteEvent();
 
