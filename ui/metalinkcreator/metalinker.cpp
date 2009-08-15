@@ -30,12 +30,40 @@
 #include <Nepomuk/Variant>
 #endif //HAVE_NEPOMUK
 #include <KDebug>
+
+namespace KGetMetalink
+{
+    QString addaptHashType(const QString &type, bool loaded);
+}
+
+/**
+ * Adapts type to the way the hash is internally stored
+ * @param type the hash-type
+ * @param load true if the hash has been loaded, false if it should be saved
+ * @note metalink wants sha1 in the form "sha-1", though
+ * the metalinker uses it internally in the form "sha1", this function
+ * transforms it to the correct form, it is only needed internally
+*/
+QString KGetMetalink::addaptHashType(const QString &type, bool loaded)
+{
+    QString t = type;
+    if (loaded)
+    {
+        t.replace("sha-", "sha");
+    }
+    else
+    {
+        t.replace("sha", "sha-");
+    }
+
+    return t;
+}
+
 void KGetMetalink::DateConstruct::setData(const QDateTime &dateT, const QTime &timeZoneOff)
 {
     dateTime = dateT;
     timeZoneOffset = timeZoneOff;
 }
-
 
 void KGetMetalink::DateConstruct::setData(const QString &dateConstruct)
 {
@@ -350,6 +378,15 @@ void KGetMetalink::Metaurl::load(const QDomElement &e)
     preference = e.attribute("preference").toInt();
     name = e.attribute("name");
     url = KUrl(e.text());
+
+    //NOTE Metalink 3.0 2nd ed compatibility
+    if (type.isEmpty())
+    {
+        if (url.fileName().endsWith(QLatin1String(".torrent")))
+        {
+            type = "torrent";
+        }
+    }
 }
 
 void KGetMetalink::Metaurl::save(QDomElement &e) const
@@ -370,6 +407,11 @@ void KGetMetalink::Metaurl::save(QDomElement &e) const
     metaurl.appendChild(text);
 
     e.appendChild(metaurl);
+}
+
+bool KGetMetalink::Metaurl::isValid()
+{
+    return url.isValid() && !type.isEmpty();
 }
 
 void KGetMetalink::Metaurl::clear()
@@ -406,6 +448,21 @@ void KGetMetalink::Url::save(QDomElement &e) const
     e.appendChild(elem);
 }
 
+bool KGetMetalink::Url::isValid()
+{
+    bool valid = url.isValid();
+    if (url.fileName().endsWith(QLatin1String(".torrent")))
+    {
+        valid = false;
+    }
+    else if (url.fileName().endsWith(QLatin1String(".metalink")))
+    {
+        valid = false;
+    }
+
+    return valid;
+}
+
 void KGetMetalink::Url::clear()
 {
     preference = 0;
@@ -421,14 +478,31 @@ void KGetMetalink::Resources::load(const QDomElement &e)
     {
         Url url;
         url.load(elem);
-        urls.append(url);
+        if (url.isValid())
+        {
+            urls.append(url);
+        }
+        //NOTE Metalink 3.0 2nd ed compatibility
+        else
+        {
+            //it might be a metaurl
+            Metaurl metaurl;
+            metaurl.load(elem);
+            if (metaurl.isValid())
+            {
+                metaurls.append(metaurl);
+            }
+        }
     }
 
     for (QDomElement elem = res.firstChildElement("metaurl"); !elem.isNull(); elem = elem.nextSiblingElement("metaurl"))
     {
         Metaurl metaurl;
         metaurl.load(elem);
-        metaurls.append(metaurl);
+        if (metaurl.isValid())
+        {
+            metaurls.append(metaurl);
+        }
     }
 }
 
@@ -458,7 +532,7 @@ void KGetMetalink::Resources::clear()
 
 void KGetMetalink::Pieces::load(const QDomElement &e)
 {
-    type = e.attribute("type");
+    type = addaptHashType(e.attribute("type"), true);
     length = e.attribute("length").toULongLong();
 
     QDomNodeList hashesList = e.elementsByTagName("hash");
@@ -466,14 +540,6 @@ void KGetMetalink::Pieces::load(const QDomElement &e)
     for (int i = 0; i < hashesList.count(); ++i)//TODO!!
     {
         QDomElement element = hashesList.at(i).toElement();
-//         if (element.attribute("type").toInt() != i)//TODO make that nicer!
-//         {
-//             hashes.clear();
-//             type.clear();
-//             length = 0;
-//             return;
-//         }
-
         hashes.append(element.text());
     }
 }
@@ -482,13 +548,12 @@ void KGetMetalink::Pieces::save(QDomElement &e) const
 {
     QDomDocument doc = e.ownerDocument();
     QDomElement pieces = doc.createElement("pieces");
-    pieces.setAttribute("type", type);
+    pieces.setAttribute("type", addaptHashType(type, false));
     pieces.setAttribute("length", length);
 
     for (int i = 0; i < hashes.size(); ++i)
     {
         QDomElement hash = doc.createElement("hash");
-        hash.setAttribute("piece", i);
         QDomText text = doc.createTextNode(hashes.at(i));
         hash.appendChild(text);
         pieces.appendChild(hash);
@@ -510,10 +575,11 @@ void KGetMetalink::Verification::load(const QDomElement &e)
 
     for (QDomElement elem = veriE.firstChildElement("hash"); !elem.isNull(); elem = elem.nextSiblingElement("hash"))
     {
-        QString type = elem.attribute("type");//TODO compatibility!!!! sha1 sha-1!!!
+        QString type = elem.attribute("type");
         QString hash = elem.text();
         if (!type.isEmpty() && !hash.isEmpty())
         {
+            type = addaptHashType(type, true);
             hashes[type] = hash;
         }
     }
@@ -536,7 +602,7 @@ void KGetMetalink::Verification::save(QDomElement &e) const
     for (it = hashes.constBegin(); it != itEnd; ++it)
     {
         QDomElement hash = doc.createElement("hash");
-        hash.setAttribute("type", it.key());
+        hash.setAttribute("type", addaptHashType(it.key(), false));
         QDomText text = doc.createTextNode(it.value());
         hash.appendChild(text);
         verification.appendChild(hash);

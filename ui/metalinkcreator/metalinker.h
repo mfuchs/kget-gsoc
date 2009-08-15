@@ -122,6 +122,8 @@ class Metaurl
         void load(const QDomElement &e);
         void save(QDomElement &e) const;
 
+        bool isValid();
+
         void clear();
 
         QString type;
@@ -153,6 +155,8 @@ class Url
         void load(const QDomElement &e);
         void save(QDomElement &e) const;
 
+        bool isValid();
+
         void clear();
 
         /**
@@ -167,7 +171,6 @@ class Url
         QString location;
 
         KUrl url;
-//TODO compatibility??? check if bitorrent and then modify to Metadata?
 };
 
 class Resources

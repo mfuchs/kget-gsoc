@@ -191,7 +191,7 @@ void FileDlg::slotAddHash()
 }
 
 void FileDlg::slotOkClicked()
-{
+{//TODO metaurl!!!
     m_file->clear();
 
     m_file->name = ui.name->text();
