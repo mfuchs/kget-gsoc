@@ -113,8 +113,17 @@ class KGET_EXPORT Verifier
         Verifier(const KUrl &m_dest);
         ~Verifier();
 
+        enum VerificationStatus
+        {
+            NoResult, //either not tried, or not enough information
+            NotVerified,
+            Verified
+        };
+
         KUrl destination() const {return m_dest;}
         void setDestination(const KUrl &destination) {m_dest = destination;}
+
+        VerificationStatus status() const {return m_status;}
 
         /**
          * Returns the supported verification types
@@ -213,11 +222,13 @@ class KGET_EXPORT Verifier
         void load(const QDomElement &e);
 
     private:
+        void changeStatus(bool verified) const;
         static QString calculatePartialChecksum(QFile *file, const QString &type, KIO::fileoffset_t startOffset, int pieceLength, KIO::filesize_t fileSize = 0);
 
     private:
         VerificationModel *m_model;
         KUrl m_dest;
+        mutable VerificationStatus m_status;
 
         QHash<QString, PartialChecksums*> m_partialSums;
 };

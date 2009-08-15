@@ -167,7 +167,8 @@ void VerificationModel::addChecksums(const QHash<QString, QString> &checksums)
 }
 
 Verifier::Verifier(const KUrl &dest)
-  : m_dest(dest)
+  : m_dest(dest),
+    m_status(NoResult)
 {
     m_model = new VerificationModel();
 }
@@ -287,7 +288,9 @@ bool Verifier::verify() const
                 hash.update(&file);
                 QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
                 file.close();
-                return (final == match.data().toString());
+                bool verified = (final == match.data().toString());
+                changeStatus(verified);
+                return verified;
             }
         }
 #endif //HAVE_QCA2
@@ -301,6 +304,7 @@ bool Verifier::verify() const
             hash.update(file);
             bool verified = hash.verify(match.data().toString().toLatin1());
             file.close();
+            changeStatus(verified);
             return verified;
         }
         file.close();
@@ -328,7 +332,9 @@ bool Verifier::verify(int row) const
             hash.update(&file);
             QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
             file.close();
-            return (final == hashString);
+            bool verified = (final == hashString);
+            changeStatus(verified);
+            return verified;
 #endif //HAVE_QCA2
             if (type == s_md5)
             {
@@ -336,11 +342,17 @@ bool Verifier::verify(int row) const
                 hash.update(file);
                 bool verified = hash.verify(hashString.toLatin1());
                 file.close();
+                changeStatus(verified);
                 return verified;
             }
         }
     }
     return false;
+}
+
+void Verifier::changeStatus(bool verified) const
+{
+    m_status = verified ? Verified : NotVerified;
 }
 
 QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
@@ -538,11 +550,7 @@ QString Verifier::calculatePartialChecksum(QFile *file, const QString &type, KIO
         }
 
         QByteArray data = file->read(s_partSize);
-#ifdef HAVE_QCA2
         hash.update(data);
-#else //NO QCA2
-        hash.update(data);
-#endif //HAVE_QCA2
     }
 
     //now read the rest
@@ -554,11 +562,7 @@ QString Verifier::calculatePartialChecksum(QFile *file, const QString &type, KIO
         }
 
         QByteArray data = file->read(dataRest);
-#ifdef HAVE_QCA2
         hash.update(data);
-#else //NO QCA2
-        hash.update(data);
-#endif //HAVE_QCA2
     }
 
 #ifdef HAVE_QCA2
@@ -594,6 +598,8 @@ KIO::filesize_t Verifier::partialChunkLength() const
 void Verifier::save(const QDomElement &element)
 {
     QDomElement e = element;
+    e.setAttribute("verificationStatus", m_status);
+
     QDomElement verification = e.ownerDocument().createElement("verification");
     for (int i = 0; i < m_model->rowCount(); ++i)
     {
@@ -627,6 +633,26 @@ void Verifier::save(const QDomElement &element)
 
 void Verifier::load(const QDomElement &e)
 {
+    if (e.hasAttribute("verificationStatus"))
+    {
+        const int status = e.attribute("verificationStatus").toInt();
+        switch (status)
+        {
+            case NoResult:
+                m_status = NoResult;
+                break;
+            case NotVerified:
+                m_status = NotVerified;
+                break;
+            case Verified:
+                m_status = Verified;
+                break;
+            default:
+                m_status = NotVerified;
+                break;
+        }
+    }
+
     QDomElement verification = e.firstChildElement("verification");
     QDomNodeList const hashList = verification.elementsByTagName("hash");
 
