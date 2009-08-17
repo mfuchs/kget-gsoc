@@ -302,7 +302,7 @@ void metalink::postDeleteEvent()
     if (m_localMetalinkLocation.isLocalFile())
     {
         KIO::Job *del = KIO::del(m_localMetalinkLocation, KIO::HideProgressInfo);
-        KIO::NetAccess::synchronousRun(del, NULL);
+        KIO::NetAccess::synchronousRun(del, 0);
     }
 
 #ifdef HAVE_NEPOMUK
