@@ -39,7 +39,7 @@ class KGET_EXPORT ChecksumSearchTransferDataSource : public TransferDataSource
         void addSegment(const KIO::fileoffset_t offset, const KIO::fileoffset_t bytes, int segmentNum = -1);
 
     private Q_SLOTS:
-        void slotFinished(KUrl src);
+        void slotFinished(const KUrl &src);
 
     private:
         KUrl m_src;

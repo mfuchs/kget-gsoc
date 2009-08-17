@@ -74,7 +74,7 @@ void ChecksumSearchTransferDataSource::addSegment(const KIO::fileoffset_t offset
     kDebug(5001);
 }
 
-void ChecksumSearchTransferDataSource::slotFinished(KUrl src)
+void ChecksumSearchTransferDataSource::slotFinished(const KUrl &src)
 {
     ChecksumSearch *search = m_jobs[src];
     m_jobs.remove(src);
