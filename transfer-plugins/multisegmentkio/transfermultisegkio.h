@@ -78,7 +78,7 @@ class TransferMultiSegKio : public QObject, public Transfer
         void slotSpeed(unsigned long bytes_per_second);
         void slotTotalSize(KIO::filesize_t size);
         void slotSearchUrls(const QList<KUrl> &urls);
-        void slotStatus(DataSourceFactory::Status status);
+        void slotStatus(Job::Status status);
         void slotRename(const KUrl &oldUrl, const KUrl &newUrl);
 
     private:

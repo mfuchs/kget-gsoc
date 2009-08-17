@@ -52,7 +52,7 @@ void TransferMultiSegKio::init()//TODO think about e, maybe not have it at all i
         connect(m_dataSourceFactory, SIGNAL(speed(ulong)), this, SLOT(slotSpeed(ulong)));
         connect(m_dataSourceFactory, SIGNAL(percent(ulong)), this, SLOT(slotPercent(ulong)));
         connect(m_dataSourceFactory, SIGNAL(processedSize(KIO::filesize_t)), this, SLOT(slotProcessedSize(KIO::filesize_t)));
-        connect(m_dataSourceFactory, SIGNAL(statusChanged(DataSourceFactory::Status)), this, SLOT(slotStatus(DataSourceFactory::Status)));
+        connect(m_dataSourceFactory, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
         connect(m_dataSourceFactory, SIGNAL(totalSize(KIO::filesize_t)), this, SLOT(slotTotalSize(KIO::filesize_t)));
 
         m_dataSourceFactory->addMirror(m_source, MultiSegKioSettings::segments());
@@ -191,22 +191,25 @@ void TransferMultiSegKio::save(const QDomElement &element)
     m_dataSourceFactory->save(element);
 }
 
-void TransferMultiSegKio::slotStatus(DataSourceFactory::Status status)
+void TransferMultiSegKio::slotStatus(Job::Status status)
 {
     ChangesFlags flags = Tc_Status;
     switch (status)
     {
-        case DataSourceFactory::Started:
+        case Job::Running:
             setStatus(Job::Running, i18n("Downloading...."), SmallIcon("media-playback-start"));
             break;
-        case DataSourceFactory::Stopped:
+        case Job::Stopped:
             setStatus(Job::Stopped, i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
             break;
-        case DataSourceFactory::MovingFile:
+        case Job::Moving:
             setStatus(Job::Stopped, i18nc("changing the destination of the file", "Changing destination"), SmallIcon("media-playback-pause"));
             break;
-        case DataSourceFactory::Finished:
+        case Job::Finished:
             setStatus(Job::Finished, i18nc("transfer state: finished", "Finished"), SmallIcon("dialog-ok"));
+            break;
+        default:
+            //TODO handle Delayed and Aborted
             break;
     }
     setTransferChange(flags, true);
@@ -297,12 +300,12 @@ FileModel *TransferMultiSegKio::fileModel()
         connect(m_fileModel, SIGNAL(rename(KUrl, KUrl)), this, SLOT(slotRename(KUrl,KUrl)));
 
         QHash<int, QPair<KIcon, QString> > statusIconText;
-        statusIconText[DataSourceFactory::Stopped] = QPair<KIcon, QString>(KIcon("process-stop"), i18nc("transfer state: stopped", "Stopped"));
-        statusIconText[DataSourceFactory::Started] = QPair<KIcon, QString>(KIcon("media-playback-start"), i18n("Downloading...."));
-        statusIconText[DataSourceFactory::MovingFile] = QPair<KIcon, QString>(KIcon("media-playback-pause"), i18nc("changing the destination of the file", "Changing destination"));
-        statusIconText[DataSourceFactory::Finished] = QPair<KIcon, QString>(KIcon("dialog-ok"), i18nc("transfer state: finished", "Finished"));
+        statusIconText[Job::Stopped] = QPair<KIcon, QString>(KIcon("process-stop"), i18nc("transfer state: stopped", "Stopped"));
+        statusIconText[Job::Running] = QPair<KIcon, QString>(KIcon("media-playback-start"), i18n("Downloading...."));
+        statusIconText[Job::Moving] = QPair<KIcon, QString>(KIcon("media-playback-pause"), i18nc("changing the destination of the file", "Changing destination"));
+        statusIconText[Job::Finished] = QPair<KIcon, QString>(KIcon("dialog-ok"), i18nc("transfer state: finished", "Finished"));
         m_fileModel->setStatusIconText(statusIconText);
-        m_fileModel->defineFinishedStatus(QList<int>() << DataSourceFactory::Finished);
+        m_fileModel->defineFinishedStatus(QList<int>() << Job::Finished);
 
         QModelIndex statusIndex = m_fileModel->index(m_dest, FileItem::Status);
         m_fileModel->setData(statusIndex, m_dataSourceFactory->status());
