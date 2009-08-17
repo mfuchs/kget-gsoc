@@ -70,7 +70,7 @@ DataSourceFactory::DataSourceFactory(const KUrl &dest, const KIO::filesize_t &si
     m_maxMirrorsUsed(3),
     m_speedTimer(0),
     m_tempDownload(0),
-    m_status(Stopped),
+    m_status(Job::Stopped),
     m_statusBeforeMove(m_status),
     m_verifier(0)
 {
@@ -98,7 +98,7 @@ DataSourceFactory::DataSourceFactory(QObject *parent)
     m_maxMirrorsUsed(3),
     m_speedTimer(0),
     m_tempDownload(0),
-    m_status(Stopped),
+    m_status(Job::Stopped),
     m_statusBeforeMove(m_status),
     m_verifier(0)
 {
@@ -169,7 +169,7 @@ void DataSourceFactory::findFileSize()
                 connect(m_tempDownload, SIGNAL(totalSize(KIO::filesize_t)), this, SLOT(sizeFound(KIO::filesize_t)));
                 connect(m_tempDownload, SIGNAL(finished()), this, SLOT(finished()));
                 m_tempDownload->start();
-                changeStatus(Started);
+                changeStatus(Job::Running);
                 break;
             }
         }
@@ -216,7 +216,7 @@ void DataSourceFactory::finished()
     delete m_tempDownload;
     m_tempDownload = 0;
 
-    changeStatus(Finished);
+    changeStatus(Job::Finished);
 
     //set all chunks to true, that is usefull for saving
     init();
@@ -265,7 +265,7 @@ void DataSourceFactory::postDeleteEvent()
 void DataSourceFactory::start()
 {
     kDebug(5001) << "Start DataSourceFactory";
-    if (m_movingFile || (m_status == Finished))
+    if (m_movingFile || (m_status == Job::Finished))
     {
         return;
     }
@@ -310,7 +310,7 @@ void DataSourceFactory::start()
                 source->transferDataSource()->start();
 
             m_startTried = false;
-            changeStatus(Started);
+            changeStatus(Job::Running);
         }
     }
 }
@@ -338,7 +338,7 @@ void DataSourceFactory::open(KIO::Job *job)
 void DataSourceFactory::stop()
 {
     kDebug(5001) << "Stopping";
-    if (m_movingFile || (m_status == Finished))
+    if (m_movingFile || (m_status == Job::Finished))
     {
         return;
     }
@@ -350,7 +350,7 @@ void DataSourceFactory::stop()
     foreach (DataSource *source, m_sources)
         source->transferDataSource()->stop();
     m_startTried = false;
-    changeStatus(Stopped);
+    changeStatus(Job::Stopped);
 }
 
 void DataSourceFactory::setDoDownload(bool doDownload)
@@ -365,7 +365,7 @@ void DataSourceFactory::setDoDownload(bool doDownload)
     }
     else
     {
-        if (m_status == Started)
+        if (m_status == Job::Running)
         {
             stop();
         }
@@ -688,7 +688,7 @@ void DataSourceFactory::slotDataWritten(KIO::Job *job, const KIO::filesize_t &wr
     {
         m_speedTimer->stop();
         killPutJob();
-        changeStatus(Finished);
+        changeStatus(Job::Finished);
     }
     m_tempData.clear();
     m_blocked = false;
@@ -734,7 +734,7 @@ bool DataSourceFactory::setNewDestination(const KUrl &newDestination)
 
             m_statusBeforeMove = m_status;
             stop();
-            changeStatus(MovingFile);
+            changeStatus(Job::Moving);
             m_movingFile = true;
 
             //still a write in progress
@@ -770,7 +770,7 @@ void DataSourceFactory::newDestResult(KJob *job)
 
     m_movingFile = false;
     changeStatus(m_statusBeforeMove);
-    if (m_status == Started)
+    if (m_status == Job::Running)
     {
         start();
     }
@@ -817,7 +817,7 @@ void DataSourceFactory::repair()
     addMirror(mirror.key(), true, mirror.value());
 
     m_downloadedSize = m_segSize * m_finishedChunks->numOnBits();
-    changeStatus(Stopped, true);
+    changeStatus(Job::Stopped, true);
     start();
 }
 
@@ -924,25 +924,25 @@ void DataSourceFactory::load(const QDomElement *element)
         addMirror(url, false, connections, true);
     }
 
-    changeStatus(static_cast<DataSourceFactory::Status>(e.attribute("status").toInt()), true);
+    changeStatus(static_cast<Job::Status>(e.attribute("status").toInt()), true);
 }
 
-void DataSourceFactory::changeStatus(DataSourceFactory::Status status, bool loaded)
+void DataSourceFactory::changeStatus(Job::Status status, bool loaded)
 {
     m_status = status;
     switch (m_status)
     {
-        case Stopped:
+        case Job::Stopped:
             m_speed = 0;
             emit speed(m_speed);
             break;
-        case Started:
+        case Job::Running:
             break;
-        case MovingFile:
+        case Job::Moving:
             m_speed = 0;
             emit speed(m_speed);
             break;
-        case Finished:
+        case Job::Finished:
             m_speed = 0;
 
             if (m_size)
@@ -965,6 +965,9 @@ void DataSourceFactory::changeStatus(DataSourceFactory::Status status, bool load
                 emit statusChanged(m_status);
                 return;
             }
+            break;
+        default:
+            //TODO handle Delayed and Aborted
             break;
     }
 
@@ -1087,7 +1090,7 @@ bool DataSourceFactory::isValid() const
     bool valid = (m_size && m_segSize && m_dest.isValid() && !m_sources.isEmpty());
 
     //if the download is finished the it is valid no matter what is set or not
-    if (m_status == Finished)
+    if (m_status == Job::Finished)
     {
         valid = true;
     }
@@ -1130,7 +1133,7 @@ bool DataSourceFactory::doDownload() const
     return m_doDownload;
 }
 
-DataSourceFactory::Status DataSourceFactory::status() const
+Job::Status DataSourceFactory::status() const
 {
     return m_status;
 }

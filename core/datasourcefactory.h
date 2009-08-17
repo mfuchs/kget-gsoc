@@ -14,6 +14,7 @@
 #include "kget_export.h"
 
 #include "transferdatasource.h"
+#include "job.h"
 #include "core/verifier.h"
 
 #include <kio/job.h>
@@ -92,14 +93,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
         DataSourceFactory(QObject* parent);
 
         ~DataSourceFactory();
-
-        enum Status
-        {
-            Stopped,
-            Started,
-            MovingFile,
-            Finished
-        };
 
         /**
          * @return true if the DataSourceFactory has enough information to start a download
@@ -190,7 +183,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         bool setNewDestination(const KUrl &newDest);
 
-        Status status() const;
+        Job::Status status() const;
 
         /**
          * Tries to repair a broken download, via completly redownloading it
@@ -206,7 +199,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
         void totalSize(KIO::filesize_t size);
         void speed(ulong speed);
         void percent(ulong percent);
-        void statusChanged(DataSourceFactory::Status status);
+        void statusChanged(Job::Status status);
 
     public slots:
         void save(const QDomElement &element);
@@ -257,7 +250,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         void init();
         void killPutJob();
-        void changeStatus(Status status, bool loaded = false);
+        void changeStatus(Job::Status status, bool loaded = false);
 
     private:
         KUrl m_dest;
@@ -301,8 +294,8 @@ class KGET_EXPORT DataSourceFactory : public QObject
         QHash<KUrl, int> m_unusedMirrors;//int = the number of paralell connections
         QTimer *m_speedTimer;
         KioDownload *m_tempDownload;
-        Status m_status;
-        Status m_statusBeforeMove;
+        Job::Status m_status;
+        Job::Status m_statusBeforeMove;
 
         Verifier *m_verifier;
 };
