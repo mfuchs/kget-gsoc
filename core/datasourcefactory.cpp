@@ -258,7 +258,7 @@ void DataSourceFactory::postDeleteEvent()
     if (m_dest.isLocalFile())
     {
         KIO::Job *del = KIO::del(m_dest, KIO::HideProgressInfo);
-        KIO::NetAccess::synchronousRun(del, NULL);
+        KIO::NetAccess::synchronousRun(del, 0);
     }
 }
 
@@ -1093,6 +1093,46 @@ bool DataSourceFactory::isValid() const
     }
     kDebug() << m_size << m_segSize << m_dest.isValid() << !m_sources.isEmpty();
     return valid;
+}
+
+KIO::filesize_t DataSourceFactory::size() const
+{
+    return m_size;
+}
+
+KIO::filesize_t DataSourceFactory::downloadedSize() const
+{
+    return m_downloadedSize;
+}
+
+ulong DataSourceFactory::currentSpeed() const
+{
+    return m_speed;
+}
+
+KUrl DataSourceFactory::dest() const
+{
+    return m_dest;
+}
+
+int DataSourceFactory::maxMirrorsUsed() const
+{
+    return m_maxMirrorsUsed;
+}
+
+void DataSourceFactory::setMaxMirrorsUsed(int maxMirrorsUsed)
+{
+    m_maxMirrorsUsed = maxMirrorsUsed;
+}
+
+bool DataSourceFactory::doDownload() const
+{
+    return m_doDownload;
+}
+
+DataSourceFactory::Status DataSourceFactory::status() const
+{
+    return m_status;
 }
 
 Verifier *DataSourceFactory::verifier()

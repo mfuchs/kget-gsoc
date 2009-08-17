@@ -108,22 +108,22 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         void start();
         void stop();
-        KIO::filesize_t size() const {return m_size;}
-        KIO::filesize_t downloadedSize() const {return m_downloadedSize;}
-        ulong currentSpeed() const {return m_speed;}
+        KIO::filesize_t size() const;
+        KIO::filesize_t downloadedSize() const;
+        ulong currentSpeed() const;
 
-        KUrl dest() const {return m_dest;}
+        KUrl dest() const;
 
         /**
          * The maximum number of mirrors that will be used for downloading, default is 3
          */
-        int maxMirrorsUsed() const {return m_maxMirrorsUsed;}
+        int maxMirrorsUsed() const;
 
         /**
          * Change the maximum number off mirrors that will be used for downloading,
          * if the download started already some mirrors might be added or removed automatically
          */
-        void setMaxMirrorsUsed(int maxMirrorsUsed) {m_maxMirrorsUsed = maxMirrorsUsed;}
+        void setMaxMirrorsUsed(int maxMirrorsUsed);
 
         /**
          * Add a mirror that can be used for downloading
@@ -177,7 +177,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
          * true by default
          * @note can be used for multiple datasourcefactory downloads
          */
-        bool doDownload() const {return m_doDownload;}
+        bool doDownload() const;
 
         /**
          * Set if the datasourcefactory should download the file or not,
@@ -190,7 +190,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         bool setNewDestination(const KUrl &newDest);
 
-        Status status() const {return m_status;}
+        Status status() const;
 
         /**
          * Tries to repair a broken download, via completly redownloading it
