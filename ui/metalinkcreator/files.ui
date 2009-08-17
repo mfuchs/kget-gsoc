@@ -49,6 +49,13 @@
    <item row="3" column="2">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="KPushButton" name="add_local_file">
+       <property name="text">
+        <string>Add local files</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="KPushButton" name="add_file"/>
      </item>
      <item>

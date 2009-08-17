@@ -140,6 +140,11 @@ class MetalinkCreator : public KAssistantDialog
         void slotFileProperties();
 
         /**
+         * Shows a dialog where local files can be selected
+         */
+        void slotAddLocalFilesPressed();
+
+        /**
          * Shows an empty file properties dialog to add a file
          */
         void slotAddPressed();

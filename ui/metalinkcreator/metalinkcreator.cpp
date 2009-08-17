@@ -29,6 +29,7 @@
 #include <QtGui/QSortFilterProxyModel>
 #include <QtGui/QStandardItemModel>
 
+#include <KFileDialog>
 #include <KLocale>
 #include <KMessageBox>
 #include <KPushButton>
@@ -472,6 +473,7 @@ void MetalinkCreator::createFiles()
     m_filesModel = new QStandardItemModel(0, 1, this);
     uiFiles.files->setModel(m_filesModel);
 
+    uiFiles.add_local_file->setIcon(KIcon("list-add"));
     uiFiles.add_file->setGuiItem(KStandardGuiItem::add());
     uiFiles.properties_file->setGuiItem(KStandardGuiItem::properties());
     uiFiles.properties_file->setEnabled(false);
@@ -480,6 +482,7 @@ void MetalinkCreator::createFiles()
     uiFiles.needUrl->hide();
     uiFiles.dragDrop->hide();
 
+    connect(uiFiles.add_local_file, SIGNAL(clicked(bool)), this, SLOT(slotAddLocalFilesPressed()));
     connect(uiFiles.add_file, SIGNAL(clicked(bool)), this, SLOT(slotAddPressed()));
     connect(uiFiles.remove_file, SIGNAL(clicked(bool)), this, SLOT(slotRemoveFile()));
     connect(uiFiles.properties_file, SIGNAL(clicked(bool)), this, SLOT(slotFileProperties()));
@@ -510,6 +513,16 @@ void MetalinkCreator::slotUpdateFilesButtons()
 
     bool propertiesEnabled = (indexes.count() == 1);
     uiFiles.properties_file->setEnabled(propertiesEnabled);
+}
+
+void MetalinkCreator::slotAddLocalFilesPressed()
+{
+    KFileDialog *dialog = new KFileDialog(KUrl(), QString(), this);
+    dialog->setMode(KFile::Files | KFile::ExistingOnly | KFile::LocalOnly);
+    if (dialog->exec() == QDialog::Accepted)
+    {
+        slotUrlsDropped(dialog->selectedUrls());
+    }
 }
 
 void MetalinkCreator::slotAddFile()
