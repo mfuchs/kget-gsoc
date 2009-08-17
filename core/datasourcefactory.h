@@ -258,7 +258,6 @@ class KGET_EXPORT DataSourceFactory : public QObject
         void init();
         void killPutJob();
         void changeStatus(Status status, bool loaded = false);
-        void changeStatus(int status, bool loaded = false);
 
     private:
         KUrl m_dest;

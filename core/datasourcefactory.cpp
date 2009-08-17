@@ -924,7 +924,7 @@ void DataSourceFactory::load(const QDomElement *element)
         addMirror(url, false, connections, true);
     }
 
-    changeStatus(e.attribute("status").toInt(), true);
+    changeStatus(static_cast<DataSourceFactory::Status>(e.attribute("status").toInt()), true);
 }
 
 void DataSourceFactory::changeStatus(DataSourceFactory::Status status, bool loaded)
@@ -987,29 +987,6 @@ void DataSourceFactory::changeStatus(DataSourceFactory::Status status, bool load
     }
 
     emit statusChanged(m_status);
-}
-
-void DataSourceFactory::changeStatus(int status, bool loaded)
-{
-    switch (status)
-    {
-        case Stopped:
-            m_status = Stopped;
-            break;
-        case Started:
-            m_status = Started;
-            break;
-        case MovingFile:
-            m_status = MovingFile;
-            break;
-        case Finished:
-            m_status = Finished;
-            break;
-        default:
-            m_status = Stopped;
-            break;
-    }
-    changeStatus(m_status, loaded);
 }
 
 void DataSourceFactory::save(const QDomElement &element)
