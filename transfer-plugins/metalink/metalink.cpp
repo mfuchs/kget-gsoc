@@ -158,7 +158,7 @@ void metalink::metalinkInit(const KUrl &src, const QByteArray &data)
         connect(dataFactory, SIGNAL(totalSize(KIO::filesize_t)), this, SLOT(totalSizeChanged(KIO::filesize_t)));
         connect(dataFactory, SIGNAL(processedSize(KIO::filesize_t)), this, SLOT(processedSizeChanged()));
         connect(dataFactory, SIGNAL(speed(ulong)), this, SLOT(speedChanged()));
-        connect(dataFactory, SIGNAL(statusChanged(DataSourceFactory::Status)), this, SLOT(slotStatus(DataSourceFactory::Status)));
+        connect(dataFactory, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
 
         //add the DataSources
         for (int i = 0; i < urlList.size(); ++i)
@@ -259,8 +259,8 @@ void metalink::startMetalink()
             if (m_currentFiles < MetalinkSettings::simultanousFiles())
             {
                 //only start factories that should be downloaded
-                if (factory->doDownload() && (factory->status() != DataSourceFactory::Finished)
-                    && (factory->status() != DataSourceFactory::Started))
+                if (factory->doDownload() && (factory->status() != Job::Finished)
+                    && (factory->status() != Job::Running))
                 {
                     ++m_currentFiles;
                     factory->start();
@@ -412,21 +412,21 @@ int metalink::remainingTime() const
     return KIO::calculateRemainingSeconds(m_totalSize, m_downloadedSize, m_averageSpeed);
 }
 
-void metalink::slotStatus(DataSourceFactory::Status status)
+void metalink::slotStatus(Job::Status status)
 {
     ChangesFlags flags = Tc_Status;
     bool changeStatus = true;
     switch (status)
     {
-        case DataSourceFactory::Started:
+        case Job::Running:
             setStatus(Job::Running, i18n("Downloading...."), SmallIcon("media-playback-start"));
             break;
 
-        case DataSourceFactory::Stopped:
+        case Job::Stopped:
             foreach (DataSourceFactory *factory, m_dataSourceFactory)
             {
                 //one factory is still running, do not change the status
-                if (factory->doDownload() && (factory->status() == DataSourceFactory::Started))
+                if (factory->doDownload() && (factory->status() == Job::Running))
                 {
                     changeStatus = false;
                     break;
@@ -439,11 +439,11 @@ void metalink::slotStatus(DataSourceFactory::Status status)
             }
             break;
 
-        case DataSourceFactory::MovingFile:
+        case Job::Moving:
             setStatus(Job::Stopped, i18nc("changing the destination of the file", "Changing destination"), SmallIcon("media-playback-pause"));
             break;
 
-        case DataSourceFactory::Finished:
+        case Job::Finished:
             //one file that has been downloaded now is finished//FIXME ignore downloads that were finished in the previous download!!!!
             if (m_currentFiles)
             {
@@ -453,7 +453,7 @@ void metalink::slotStatus(DataSourceFactory::Status status)
             foreach (DataSourceFactory *factory, m_dataSourceFactory)
             {
                 //one factory is not finished, do not change the status
-                if (factory->doDownload() && (factory->status() != DataSourceFactory::Finished))
+                if (factory->doDownload() && (factory->status() != Job::Finished))
                 {
                     changeStatus = false;
                     break;
@@ -482,6 +482,10 @@ void metalink::slotStatus(DataSourceFactory::Status status)
                     }
                 }
             }
+            break;
+
+        default:
+            //TODO handle Delayed and Aborted
             break;
     }
 
@@ -571,11 +575,11 @@ void metalink::load(const QDomElement *element)
             connect(file, SIGNAL(totalSize(KIO::filesize_t)), this, SLOT(totalSizeChanged(KIO::filesize_t)));
             connect(file, SIGNAL(processedSize(KIO::filesize_t)), this, SLOT(processedSizeChanged()));
             connect(file, SIGNAL(speed(ulong)), this, SLOT(speedChanged()));
-            connect(file, SIGNAL(statusChanged(DataSourceFactory::Status)), this, SLOT(slotStatus(DataSourceFactory::Status)));
+            connect(file, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
             m_dataSourceFactory[file->dest()] = file;
 
             //start the DataSourceFactories that were Started when KGet was closed
-            if (file->status() == DataSourceFactory::Started)
+            if (file->status() == Job::Running)
             {
                 if (m_currentFiles < MetalinkSettings::simultanousFiles())
                 {
@@ -635,12 +639,12 @@ FileModel *metalink::fileModel()
         connect(m_fileModel, SIGNAL(checkStateChanged()), this, SLOT(filesSelected()));
 
         QHash<int, QPair<KIcon, QString> > statusIconText;
-        statusIconText[DataSourceFactory::Stopped] = QPair<KIcon, QString>(KIcon("process-stop"), i18nc("transfer state: stopped", "Stopped"));
-        statusIconText[DataSourceFactory::Started] = QPair<KIcon, QString>(KIcon("media-playback-start"), i18n("Downloading...."));
-        statusIconText[DataSourceFactory::MovingFile] = QPair<KIcon, QString>(KIcon("media-playback-pause"), i18nc("changing the destination of the file", "Changing destination"));
-        statusIconText[DataSourceFactory::Finished] = QPair<KIcon, QString>(KIcon("dialog-ok"), i18nc("transfer state: finished", "Finished"));
+        statusIconText[Job::Stopped] = QPair<KIcon, QString>(KIcon("process-stop"), i18nc("transfer state: stopped", "Stopped"));
+        statusIconText[Job::Running] = QPair<KIcon, QString>(KIcon("media-playback-start"), i18n("Downloading...."));
+        statusIconText[Job::Moving] = QPair<KIcon, QString>(KIcon("media-playback-pause"), i18nc("changing the destination of the file", "Changing destination"));
+        statusIconText[Job::Finished] = QPair<KIcon, QString>(KIcon("dialog-ok"), i18nc("transfer state: finished", "Finished"));
         m_fileModel->setStatusIconText(statusIconText);
-        m_fileModel->defineFinishedStatus(QList<int>() << DataSourceFactory::Finished);
+        m_fileModel->defineFinishedStatus(QList<int>() << Job::Finished);
 
         foreach (DataSourceFactory *factory, m_dataSourceFactory)
         {

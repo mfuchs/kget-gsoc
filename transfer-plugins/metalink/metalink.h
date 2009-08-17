@@ -81,7 +81,7 @@ class metalink : public QObject, public Transfer
         void totalSizeChanged(KIO::filesize_t size);
         void processedSizeChanged();
         void speedChanged();
-        void slotStatus(DataSourceFactory::Status status);
+        void slotStatus(Job::Status status);
         void slotRename(const KUrl &oldUrl, const KUrl &newUrl);
 
     private :
