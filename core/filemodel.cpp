@@ -309,7 +309,7 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     //get the status icon as well as status text
     if (index.column() == FileItem::Status)
     {
-        int status = data.toInt();
+        const int status = data.toInt();
         if (!item->childCount() && m_statusIconText.contains(status))
         {
             if (role == Qt::DisplayRole)
@@ -351,8 +351,7 @@ bool FileModel::setData(const QModelIndex &index, const QVariant &value, int rol
     }
     else if ((index.column() == FileItem::Status) && (role == Qt::EditRole))
     {
-        const int status = value.toInt();
-        if (!m_statusIconText.contains(status))
+        if (!m_statusIconText.contains(value.toInt()))
         {
             return false;
         }
@@ -581,7 +580,7 @@ bool FileModel::downloadFinished(KUrl &file)
     FileItem *item = getItem(file);
     if (item)
     {
-        int status = item->data(FileItem::Status, Qt::DisplayRole).toInt();
+        const int status = item->data(FileItem::Status, Qt::DisplayRole).toInt();
         if (m_statusIconText.contains(status) && m_finishedStatus.contains(status))
         {
             return true;
