@@ -113,7 +113,7 @@ void metalink::metalinkInit(const KUrl &src, const QByteArray &data)
         KGetMetalink::HandleMetalink::load(data, &m_metalink);
     }
 
-//TODO wenn nicht valid fehlermeldung und möglichkeit zu ignorieren, aber nur, wenn files vorhanden?
+    //TODO error message?
     //try to parse the locally stored metalink-file
     if (!m_metalink.isValid())
     {
@@ -245,7 +245,7 @@ void metalink::filesSelected()
     //some files may be set to download, so start them as long as the transfer is not stopped
     if (status() != Job::Stopped)
     {
-        startMetalink();//TODO use bool starttried!! and also store that bool when save!! --> do that also for datasourcefactory!//NOTE not needed to save here, but only in dataFactory?
+        startMetalink();
     }
 }
 
@@ -418,10 +418,6 @@ void metalink::slotStatus(Job::Status status)
     bool changeStatus = true;
     switch (status)
     {
-        case Job::Running:
-            setStatus(Job::Running, i18n("Downloading...."), SmallIcon("media-playback-start"));
-            break;
-
         case Job::Stopped:
             foreach (DataSourceFactory *factory, m_dataSourceFactory)
             {
@@ -435,12 +431,8 @@ void metalink::slotStatus(Job::Status status)
 
             if (changeStatus)
             {
-                setStatus(Job::Stopped, i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
+                setStatus(Job::Stopped);
             }
-            break;
-
-        case Job::Moving:
-            setStatus(Job::Stopped, i18nc("changing the destination of the file", "Changing destination"), SmallIcon("media-playback-pause"));
             break;
 
         case Job::Finished:
@@ -462,7 +454,7 @@ void metalink::slotStatus(Job::Status status)
 
             if (changeStatus)
             {
-                setStatus(Job::Finished, i18nc("transfer state: finished", "Finished"), SmallIcon("dialog-ok"));
+                setStatus(Job::Finished);
 
                 //see if some files are NotVerified
                 QStringList brokenFiles;
@@ -478,14 +470,17 @@ void metalink::slotStatus(Job::Status status)
                 {
                     if (KMessageBox::warningYesNoCancelList(0, i18n("The cownload could not be verified, try to repair it?"), brokenFiles))
                     {
-                        repair();
+                        if (repair())
+                        {
+                            return;
+                        }
                     }
                 }
             }
             break;
 
         default:
-            //TODO handle Delayed and Aborted
+            setStatus(status);
             break;
     }
 
@@ -637,14 +632,6 @@ FileModel *metalink::fileModel()
         m_fileModel = new FileModel(files(), directory(), this);
         connect(m_fileModel, SIGNAL(rename(KUrl,KUrl)), this, SLOT(slotRename(KUrl,KUrl)));
         connect(m_fileModel, SIGNAL(checkStateChanged()), this, SLOT(filesSelected()));
-
-        QHash<int, QPair<KIcon, QString> > statusIconText;
-        statusIconText[Job::Stopped] = QPair<KIcon, QString>(KIcon("process-stop"), i18nc("transfer state: stopped", "Stopped"));
-        statusIconText[Job::Running] = QPair<KIcon, QString>(KIcon("media-playback-start"), i18n("Downloading...."));
-        statusIconText[Job::Moving] = QPair<KIcon, QString>(KIcon("media-playback-pause"), i18nc("changing the destination of the file", "Changing destination"));
-        statusIconText[Job::Finished] = QPair<KIcon, QString>(KIcon("dialog-ok"), i18nc("transfer state: finished", "Finished"));
-        m_fileModel->setStatusIconText(statusIconText);
-        m_fileModel->defineFinishedStatus(QList<int>() << Job::Finished);
 
         foreach (DataSourceFactory *factory, m_dataSourceFactory)
         {
