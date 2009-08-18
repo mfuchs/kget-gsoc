@@ -55,7 +55,7 @@ bool TransferKio::setNewDestination(const KUrl &newDestination)
         {
             m_movingFile = true;
             stop();
-            setStatus(Job::Stopped, i18nc("changing the destination of the file", "Changing destination"), SmallIcon("media-playback-pause"));
+            setStatus(Job::Moving);
             setTransferChange(Tc_Status, true);
 
             m_dest = newDestination;
@@ -115,7 +115,7 @@ void TransferKio::stop()
     }
 
     kDebug(5001) << "Stop";
-    setStatus(Job::Stopped, i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
+    setStatus(Job::Stopped);
     m_downloadSpeed = 0;
     setTransferChange(Tc_Status | Tc_DownloadSpeed, true);
 }
@@ -168,7 +168,7 @@ void TransferKio::slotResult( KJob * kioJob )
     {
         case 0:                            //The download has finished
         case KIO::ERR_FILE_ALREADY_EXIST:  //The file has already been downloaded.
-            setStatus(Job::Finished, i18nc("transfer state: finished", "Finished"), SmallIcon("dialog-ok"));
+            setStatus(Job::Finished);
         // "ok" icon should probably be "dialog-success", but we don't have that icon in KDE 4.0
             m_percent = 100;
             m_downloadSpeed = 0;
@@ -179,7 +179,7 @@ void TransferKio::slotResult( KJob * kioJob )
             //There has been an error
             kDebug(5001) << "--  E R R O R  (" << kioJob->error() << ")--";
             if (!m_stopped)
-                setStatus(Job::Aborted, i18n("Aborted"), SmallIcon("dialog-error"));
+                setStatus(Job::Aborted);
             break;
     }
     // when slotResult gets called, the m_copyjob has already been deleted!
@@ -216,7 +216,7 @@ void TransferKio::slotTotalSize( KJob * kioJob, qulonglong size )
 
     kDebug(5001) << "slotTotalSize";
 
-    setStatus(Job::Running, i18n("Downloading...."), SmallIcon("media-playback-start"));
+    setStatus(Job::Running);
 
     m_totalSize = size;
     setTransferChange(Tc_Status | Tc_TotalSize, true);
@@ -230,7 +230,7 @@ void TransferKio::slotProcessedSize( KJob * kioJob, qulonglong size )
 
     if(status() != Job::Running)
     {
-        setStatus(Job::Running, i18n("Downloading...."),  SmallIcon("media-playback-start"));
+        setStatus(Job::Running);
         setTransferChange(Tc_Status);
     }
     m_downloadedSize = size;
@@ -246,9 +246,9 @@ void TransferKio::slotSpeed( KJob * kioJob, unsigned long bytes_per_second )
     if(status() != Job::Running)
     {
         if (m_movingFile)
-            setStatus(Job::Stopped, i18nc("changing the destination of the file", "Changing destination"), SmallIcon("media-playback-pause"));
+            setStatus(Job::Moving);
         else
-            setStatus(Job::Running, i18n("Downloading...."),  SmallIcon("media-playback-start"));
+            setStatus(Job::Running);
         setTransferChange(Tc_Status);
 
     }
