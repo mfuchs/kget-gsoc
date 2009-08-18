@@ -28,6 +28,9 @@
 #include "nepomukhandler.h"
 #endif
 
+const QStringList Transfer::m_statusTexts = QStringList() << i18n("Downloading....") << i18nc("transfer state: delayed", "Delayed") << i18nc("transfer state: stopped", "Stopped") << i18nc("transfer state: aborted", "Aborted") << i18nc("transfer state: finished", "Finished") << i18nc("changing the destination of the file", "Changing destination");
+const QStringList Transfer::m_statusIcons = QStringList() << "media-playback-start" << "view-history" << "process-stop" << "dialog-error" << "dialog-ok" << "media-playback-pause";
+
 Transfer::Transfer(TransferGroup * parent, TransferFactory * factory,
                    Scheduler * scheduler, const KUrl & source, const KUrl & dest,
                    const QDomElement * e)
@@ -167,14 +170,14 @@ void Transfer::setDelay(int seconds)
 {
     m_scheduler->startDelayTimer(this, seconds);
 
-    setStatus(Job::Delayed, i18nc("transfer state: delayed", "Delayed"), SmallIcon("view-history"));
+    setStatus(Job::Delayed);
 
     setTransferChange(Tc_Status, true);
 }
 
 void Transfer::delayTimerEvent()
 {
-    setStatus(Job::Stopped, i18nc("transfer state: stopped", "Stopped"), SmallIcon("process-stop"));
+    setStatus(Job::Stopped);
 
     setTransferChange(Tc_Status, true);
 }
@@ -247,7 +250,7 @@ void Transfer::load(const QDomElement *element)
 
     if((m_totalSize == m_downloadedSize) && (m_totalSize != 0))
     {
-        setStatus(Job::Finished, i18nc("transfer state: finished", "Finished"), SmallIcon("dialog-ok"));
+        setStatus(Job::Finished);
     }
     else
     {
@@ -282,8 +285,20 @@ void Transfer::setStatus(Job::Status jobStatus, const QString &text, const QPixm
     if((status() == Job::Finished) && (jobStatus != Job::Finished))
         return;
 
-    m_statusText = text;
-    m_statusPixmap = pix;
+    QString statusText = text;
+    if (statusText.isEmpty())
+    {
+        statusText = m_statusTexts[jobStatus];
+    }
+
+    QPixmap statusIcon = pix;
+    if (statusIcon.isNull())
+    {
+        statusIcon = SmallIcon(m_statusIcons[jobStatus]);
+    }
+
+    m_statusText = statusText;
+    m_statusPixmap = statusIcon;
 
 #ifdef HAVE_NEPOMUK
     if (jobStatus == Job::Finished)
@@ -320,4 +335,14 @@ void Transfer::setTransferChange(ChangesFlags change, bool postEvent)
         change = change | Tc_RemainingTime;
     }
     handler()->setTransferChange(change, postEvent);
+}
+
+QString Transfer::statusText(Job::Status status)
+{
+    return m_statusTexts[status];
+}
+
+QPixmap Transfer::statusPixmap(Job::Status status)
+{
+    return SmallIcon(m_statusIcons[status]);
 }

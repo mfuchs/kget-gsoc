@@ -121,6 +121,9 @@ class KGET_EXPORT Transfer : public Job
         QString statusText() const             {return m_statusText;}
         QPixmap statusPixmap() const           {return m_statusPixmap;}
 
+        static QString statusText(Job::Status status);
+        static QPixmap statusPixmap(Job::Status status);
+
         int percent() const                    {return m_percent;}
         int downloadSpeed() const              {return m_downloadSpeed;}
         int uploadSpeed() const                {return m_uploadSpeed;}
@@ -269,7 +272,7 @@ class KGET_EXPORT Transfer : public Job
          * Sets the Job status to jobStatus, the status text to text and
          * the status pixmap to pix.
          */
-        void setStatus(Job::Status jobStatus, const QString &text, const QPixmap &pix);
+        void setStatus(Job::Status jobStatus, const QString &text = QString(), const QPixmap &pix = QPixmap());
 
         /**
          * Makes the TransferHandler associated with this transfer know that
@@ -307,6 +310,8 @@ class KGET_EXPORT Transfer : public Job
         int m_runningSeconds;
         double m_ratio;
 
+        static const QStringList m_statusTexts;
+        static const QStringList m_statusIcons;
         QString m_statusText;
         QPixmap m_statusPixmap;
         QTime m_runningTime;
