@@ -677,6 +677,8 @@ void metalink::slotRename(const KUrl &oldUrl, const KUrl &newUrl)
 #ifdef HAVE_NEPOMUK
     m_nepHandler->setDestinations(files());
 #endif //HAVE_NEPOMUK
+
+    setTransferChange(Tc_FileName);
 }
 
 bool metalink::setDirectory(const KUrl &new_directory)
@@ -710,6 +712,8 @@ bool metalink::setDirectory(const KUrl &new_directory)
 #ifdef HAVE_NEPOMUK
     m_nepHandler->setDestinations(files());
 #endif //HAVE_NEPOMUK
+
+    setTransferChange(Tc_FileName);
 
     return true;
 }
