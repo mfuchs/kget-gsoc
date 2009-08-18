@@ -21,6 +21,7 @@
 #define FILEMODEL_H
 
 #include "kget_export.h"
+#include "transfer.h"
 
 #include <KUrl>
 
@@ -77,7 +78,7 @@ class KGET_EXPORT FileItem
         QList<FileItem*> m_childItems;
         QString m_name;
         Qt::CheckState m_state;
-        int m_downloadStatus;
+        Job::Status m_status;
         KIO::fileoffset_t m_totalSize;
         FileItem *m_parent;
 };
@@ -130,15 +131,16 @@ class KGET_EXPORT FileModel : public QAbstractItemModel
         void setDirectory(const KUrl &newDirectory);
 
         /**
-         * Set the available statuses with their corresponding KIcons and text
+         * Set a custom status text for status
+         * @note QString() removes the custom text for status
          */
-        void setStatusIconText(const QHash<int, QPair<KIcon, QString> > &statusIconText);
+        void setCustomStatusText(Job::Status status, const QString &text);
 
         /**
-         * Define which status numbers mean a finished download, so that the
-         * Model knows when a download is finished
+         * Set a custom status icon for status
+         * @note KIcon() removes the custom icon for status
          */
-        void defineFinishedStatus(const QList<int> &finished);
+        void setCustomStatusIcon(Job::Status status, const KIcon &icon);
 
         /**
          * Checks if the download for file has been finished
@@ -199,16 +201,8 @@ class KGET_EXPORT FileModel : public QAbstractItemModel
          */
         QList<FileItem*> m_files;
 
-        /**
-         * Stores the different status types (int), and the corresponding
-         * Icons as well as texts
-         */
-        QHash<int, QPair<KIcon, QString> > m_statusIconText;
-
-        /**
-         * Stores the int values that are used as status when the download finished
-         */
-        QList<int> m_finishedStatus;
+        QHash<Job::Status, QString> m_customStatusTexts;
+        QHash<Job::Status, KIcon> m_customStatusIcons;
 };
 
 #endif

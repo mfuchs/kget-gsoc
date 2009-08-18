@@ -29,7 +29,7 @@
 FileItem::FileItem(const QString &name, FileItem *parent)
   : m_name(name),
     m_state(Qt::Checked),
-    m_downloadStatus(0),
+    m_status(Job::Stopped),
     m_totalSize(0),
     m_parent(parent)
 {
@@ -91,7 +91,7 @@ QVariant FileItem::data(int column, int role) const
         {
             if (!childCount())
             {
-                return m_downloadStatus;
+                return m_status;
             }
         }
     }
@@ -135,7 +135,7 @@ bool FileItem::setData(int column, const QVariant &value, FileModel *model, int 
         {
             if (!childCount())
             {
-                m_downloadStatus = value.toInt();
+                m_status = static_cast<Job::Status>(value.toInt());
                 model->changeData(this->row(), column, this);
             }
         }
@@ -309,16 +309,30 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     //get the status icon as well as status text
     if (index.column() == FileItem::Status)
     {
-        const int status = data.toInt();
-        if (!item->childCount() && m_statusIconText.contains(status))
+        const Job::Status status = static_cast<Job::Status>(data.toInt());
+        if (!item->childCount())
         {
             if (role == Qt::DisplayRole)
             {
-                return m_statusIconText[status].second;
+                if (m_customStatusTexts.contains(status))
+                {
+                    return m_customStatusTexts[status];
+                }
+                else
+                {
+                    return Transfer::statusText(status);
+                }
             }
             else if (role == Qt::DecorationRole)
             {
-                return m_statusIconText[status].first;
+                if (m_customStatusIcons.contains(status))
+                {
+                    return m_customStatusIcons[status];
+                }
+                else
+                {
+                    return Transfer::statusPixmap(status);
+                }
             }
         }
         else
@@ -348,13 +362,6 @@ bool FileModel::setData(const QModelIndex &index, const QVariant &value, int rol
         }
 
         return worked;
-    }
-    else if ((index.column() == FileItem::Status) && (role == Qt::EditRole))
-    {
-        if (!m_statusIconText.contains(value.toInt()))
-        {
-            return false;
-        }
     }
 
     return item->setData(index.column(), value, this, role);
@@ -565,23 +572,13 @@ FileItem *FileModel::getItem(const KUrl &file)
     return item;
 }
 
-void FileModel::setStatusIconText(const QHash<int, QPair<KIcon, QString> > &statusIconText)
-{
-    m_statusIconText = statusIconText;
-}
-
-void FileModel::defineFinishedStatus(const QList<int> &finished)
-{
-    m_finishedStatus = finished;
-}
-
 bool FileModel::downloadFinished(KUrl &file)
 {
     FileItem *item = getItem(file);
     if (item)
     {
-        const int status = item->data(FileItem::Status, Qt::DisplayRole).toInt();
-        if (m_statusIconText.contains(status) && m_finishedStatus.contains(status))
+        const Job::Status status = static_cast<Job::Status>(item->data(FileItem::Status, Qt::DisplayRole).toInt());
+        if (status == Job::Finished)
         {
             return true;
         }
