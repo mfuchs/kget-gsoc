@@ -42,7 +42,7 @@ TransferMultiSegKio::TransferMultiSegKio(TransferGroup *parent, TransferFactory 
 {
 }
 
-void TransferMultiSegKio::init()//TODO think about e, maybe not have it at all in the constructor?
+void TransferMultiSegKio::init()
 {
     Transfer::init();
 
@@ -142,8 +142,8 @@ bool TransferMultiSegKio::setDirectory(const KUrl& newDirectory)
 
 bool TransferMultiSegKio::setNewDestination(const KUrl &newDestination)
 {
-    kDebug() << "***newDestination";
-if (/*isResumable() && */newDestination.isValid() && (newDestination != dest()) && m_dataSourceFactory)
+    kDebug(5001) << "New destination: " << newDestination;
+    if (/*isResumable() && */newDestination.isValid() && (newDestination != dest()) && m_dataSourceFactory)
     {
         m_movingFile = true;
         stop();
@@ -159,6 +159,8 @@ if (/*isResumable() && */newDestination.isValid() && (newDestination != dest()) 
 #ifdef HAVE_NEPOMUK
         nepomukHandler()->setNewDestination(m_dest);
 #endif //HAVE_NEPOMUK
+
+        setTransferChange(Tc_FileName);
 
         return true;
     }
@@ -330,6 +332,8 @@ void TransferMultiSegKio::slotRename(const KUrl &oldUrl, const KUrl &newUrl)
 #ifdef HAVE_NEPOMUK
         nepomukHandler()->setNewDestination(m_dest);
 #endif //HAVE_NEPOMUK
+
+        setTransferChange(Tc_FileName);
     }
 }
 
