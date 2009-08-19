@@ -18,6 +18,7 @@
 ***************************************************************************/
 
 #include "dlgchecksumsearch.h"
+#include "adddlg.h"
 
 #include "kget_export.h"
 
@@ -27,37 +28,146 @@
 #include "checksumsearchsettings.h"
 
 #include <QtGui/QStandardItemModel>
+#include <QtGui/QStringListModel>
 
 KGET_EXPORT_PLUGIN_CONFIG(DlgChecksumSettingsWidget)
 
-DlgChecksumSettingsWidget::DlgChecksumSettingsWidget(QWidget *parent, const QVariantList &args)
-  : KCModule(KGetFactory::componentData(), parent, args),
-    m_selectionChanged(false),
-    m_url(KUrl("http://www.test.com/a_file.zip"))
+ChecksumDelegate::ChecksumDelegate(QObject *parent)
+  : QStyledItemDelegate(parent),
+    m_modesModel(0),
+    m_typesModel(0)
 {
+}
+
+ChecksumDelegate::ChecksumDelegate(QStringListModel *modesModel, QStringListModel *typesModel, QObject *parent)
+  : QStyledItemDelegate(parent),
+    m_modesModel(modesModel),
+    m_typesModel(typesModel)
+{
+}
+
+QWidget *ChecksumDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(option)
+
+    if (index.isValid())
+    {
+        if (index.column() == 0l)
+        {
+            KLineEdit *line = new KLineEdit(parent);
+
+            return line;
+        }
+        else if (index.column() == 1)
+        {
+            if (m_modesModel)
+            {
+                KComboBox *modesBox = new KComboBox(parent);
+                modesBox->setModel(m_modesModel);
+
+                return modesBox;
+            }
+        }
+        else if (index.column() == 2)
+        {
+            if (m_typesModel)
+            {
+                KComboBox *typesBox = new KComboBox(parent);
+                typesBox->setModel(m_typesModel);
+
+                return typesBox;
+            }
+        }
+    }
+
+    return 0;
+}
+
+void ChecksumDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    if (index.isValid() && editor)
+    {
+        if (index.column() == 0)
+        {
+            KLineEdit *line = static_cast<KLineEdit*>(editor);
+            line->setText(index.model()->data(index, Qt::EditRole).toString());
+        }
+        else if (index.column() == 1)
+        {
+            KComboBox *modesBox = static_cast<KComboBox*>(editor);
+            const QString mode = index.model()->data(index, Qt::EditRole).toString();
+            modesBox->setCurrentIndex(modesBox->findText(mode));
+        }
+        else if (index.column() == 2)
+        {
+            KComboBox *typesBox = static_cast<KComboBox*>(editor);
+            const QString type = index.model()->data(index, Qt::EditRole).toString();
+            typesBox->setCurrentIndex(typesBox->findText(type));
+        }
+    }
+}
+
+void ChecksumDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    if (index.isValid() && editor && model)
+    {
+        if (index.column() == 0)
+        {
+            KLineEdit *line = static_cast<KLineEdit*>(editor);
+            if (!line->text().isEmpty())
+            {
+                model->setData(index, line->text());
+            }
+        }
+        else if (index.column() == 1)
+        {
+            KComboBox *modesBox = static_cast<KComboBox*>(editor);
+            model->setData(index, modesBox->currentText());
+            model->setData(index, modesBox->currentIndex(), Qt::UserRole);
+        }
+        else if (index.column() == 2)
+        {
+            KComboBox *typesBox = static_cast<KComboBox*>(editor);
+            model->setData(index, typesBox->currentText());
+        }
+    }
+}
+
+void ChecksumDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(index)
+    editor->setGeometry(option.rect);
+}
+
+DlgChecksumSettingsWidget::DlgChecksumSettingsWidget(QWidget *parent, const QVariantList &args)
+  : KCModule(KGetFactory::componentData(), parent, args)
+{
+    ui.setupUi(this);
+
+    m_modes = ChecksumSearch::urlChangeModes();
+    m_modesModel = new QStringListModel(m_modes, this);
+    QStringList types = Verifier::supportedVerficationTypes();
+    types.insert(0, QString());
+    m_typesModel = new QStringListModel(types, this);
+
     m_model = new QStandardItemModel(0, 3, this);
     m_model->setHeaderData(0, Qt::Horizontal, i18nc("the string that is used to modify an url", "Change string"));
     m_model->setHeaderData(1, Qt::Horizontal, i18nc("the mode defines how the url should be changed", "Change mode"));
     m_model->setHeaderData(2, Qt::Horizontal, i18nc("the type of the checksum e.g. md5", "Checksum type"));
 
-    ui.setupUi(this);
     ui.treeView->setModel(m_model);
+    ChecksumDelegate *delegate = new ChecksumDelegate(m_modesModel, m_typesModel, this);
+    ui.treeView->setItemDelegate(delegate);
     ui.add->setIcon(KIcon("list-add"));
     ui.remove->setIcon(KIcon("list-remove"));
     slotUpdate();
 
-    QStringList modes = ChecksumSearch::urlChangeModes();
-    ui.mode->addItems(modes);
-    QStringList types = Verifier::supportedVerficationTypes();
-    types.insert(0, QString());
-    ui.type->addItems(types);
-
     connect(ui.add, SIGNAL(clicked()), this, SLOT(slotAdd()));
-    connect(ui.modify, SIGNAL(clicked()), this, SLOT(slotModify()));
     connect(ui.remove, SIGNAL(clicked()), this, SLOT(slotRemove()));
-    connect(ui.change, SIGNAL(userTextChanged(QString)), this, SLOT(slotUpdate()));
-    connect(ui.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(slotSelectionChanged()));
-    connect(ui.mode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotUpdateLabel()));
+    connect(ui.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(slotUpdate()));
+    connect(m_model, SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(changed()));
+    connect(m_model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(changed()));
+    connect(m_model, SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(changed()));
 }
 
 DlgChecksumSettingsWidget::~DlgChecksumSettingsWidget()
@@ -66,33 +176,10 @@ DlgChecksumSettingsWidget::~DlgChecksumSettingsWidget()
 
 void DlgChecksumSettingsWidget::slotAdd()
 {
-    addItem(ui.change->text(), ui.mode->currentIndex(), ui.type->currentText());
-    changed();
-}
+    AddDlg *dialog = new AddDlg(m_modesModel, m_typesModel, this);
+    connect(dialog, SIGNAL(addItem(QString,int,QString)), this, SLOT(slotAddItem(QString,int,QString)));
 
-void DlgChecksumSettingsWidget::slotModify()
-{
-    QModelIndexList selected = ui.treeView->selectionModel()->selectedRows();
-
-    //modifying only works for one selected item
-    if (selected.count() != 1)
-    {
-        return;
-    }
-
-    int row = selected.first().row();
-
-    const QString change = ui.change->text();
-    const QString mode = ui.mode->currentText();
-    int index = ui.mode->currentIndex();
-    const QString type = ui.type->currentText();
-
-    m_model->setData(m_model->index(row, 0), change);
-    m_model->setData(m_model->index(row, 1), mode);
-    m_model->setData(m_model->index(row, 1), index, Qt::UserRole);
-    m_model->setData(m_model->index(row, 2), type);
-
-    changed();
+    dialog->show();
 }
 
 void DlgChecksumSettingsWidget::slotRemove()
@@ -102,13 +189,11 @@ void DlgChecksumSettingsWidget::slotRemove()
     {
         m_model->removeRow(index.row());
     }
-
-    changed();
 }
 
-void DlgChecksumSettingsWidget::addItem(const QString &change, int mode, const QString &type)
+void DlgChecksumSettingsWidget::slotAddItem(const QString &change, int mode, const QString &type)
 {
-    QStandardItem *item = new QStandardItem(ui.mode->itemText(mode));
+    QStandardItem *item = new QStandardItem(m_modes.value(mode));
     item->setData(QVariant(mode), Qt::UserRole);
 
     QList<QStandardItem*> items;
@@ -116,45 +201,11 @@ void DlgChecksumSettingsWidget::addItem(const QString &change, int mode, const Q
     items << item;
     items << new QStandardItem(type);
     m_model->insertRow(m_model->rowCount(), items);
-
-    changed();
-}
-
-void DlgChecksumSettingsWidget::slotSelectionChanged()
-{
-    m_selectionChanged = true;
-
-    slotUpdate();
 }
 
 void DlgChecksumSettingsWidget::slotUpdate()
 {
-    ui.add->setEnabled(!ui.change->text().isEmpty());
     ui.remove->setEnabled(ui.treeView->selectionModel()->hasSelection());
-
-    //modify should only work if there is only one selection
-    const bool enabled = (ui.treeView->selectionModel()->selectedRows().count() == 1);
-    if (enabled && m_selectionChanged)
-    {
-        int row = ui.treeView->selectionModel()->selectedRows().first().row();
-        ui.change->setText(m_model->data(m_model->index(row, 0)).toString());
-        ui.mode->setCurrentIndex(m_model->data(m_model->index(row, 1), Qt::UserRole).toInt());
-        ui.type->setCurrentItem(m_model->data(m_model->index(row, 2)).toString());
-
-    }
-    ui.modify->setEnabled(enabled);
-
-    slotUpdateLabel();
-
-    m_selectionChanged = false;
-}
-
-void DlgChecksumSettingsWidget::slotUpdateLabel()
-{
-    const ChecksumSearch::UrlChangeMode mode = static_cast<ChecksumSearch::UrlChangeMode>(ui.mode->currentIndex());
-    const KUrl modifiedUrl = ChecksumSearch::createUrl(m_url, ui.change->text(), mode);
-    const QString text = i18n("%1 would become %2", m_url.prettyUrl(), modifiedUrl.prettyUrl());
-    ui.label->setText(text);
 }
 
 void DlgChecksumSettingsWidget::load()
@@ -165,7 +216,7 @@ void DlgChecksumSettingsWidget::load()
 
     for(int i = 0; i < changes.size(); ++i)
     {
-        addItem(changes.at(i), modes.at(i), types.at(i));
+        slotAddItem(changes.at(i), modes.at(i), types.at(i));
     }
 }
 

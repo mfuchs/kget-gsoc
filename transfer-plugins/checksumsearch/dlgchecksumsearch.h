@@ -24,9 +24,30 @@
 
 #include "checksumsearchtransferdatasource.h"
 
+#include <QtGui/QStyledItemDelegate>
+
 #include <KCModule>
 
 class QStandardItemModel;
+class QStringListModel;
+
+class ChecksumDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+    public:
+        ChecksumDelegate(QObject *parent = 0);
+        ChecksumDelegate(QStringListModel *modesModel, QStringListModel *typesModel, QObject *parent = 0);
+
+        QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+        void setEditorData(QWidget *editor, const QModelIndex &index) const;
+        void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
+        void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+    private:
+        QStringListModel *m_modesModel;
+        QStringListModel *m_typesModel;
+};
 
 class DlgChecksumSettingsWidget : public KCModule
 {
@@ -42,15 +63,9 @@ class DlgChecksumSettingsWidget : public KCModule
 
     private slots:
         /**
-         * Adds another row to the model
-         * The currently present data of the lineedit and the comboboxes are used for that
+         * Oppens the AddDlg
          */
         void slotAdd();
-
-        /**
-         * Modify the selected item
-         */
-        void slotModify();
 
         /**
          * Remove the selected indexes
@@ -63,18 +78,7 @@ class DlgChecksumSettingsWidget : public KCModule
          */
         void slotUpdate();
 
-        /**
-         * Sets m_selectionChanged to true and calls slotUpdateButtons, that way it is
-         * clear what function (not) called slotUpdateButtons()
-         */
-        void slotSelectionChanged();
-
-        /**
-         * Updates the text of the label
-         */
-        void slotUpdateLabel();
-
-    private:
+    private slots:
         /**
          * Adds a new item defining how to proceed a search for checksums to the model
          * @param change the string that should change the source url by mode
@@ -82,14 +86,15 @@ class DlgChecksumSettingsWidget : public KCModule
          * @param type the checksum type, like e.g. "md5", empty if you do not know that
          * e.g. if change is "CHECKSUMS" you cannot know which checksums are present
          */
-        void addItem(const QString &change, int mode, const QString &type = QString());
+        void slotAddItem(const QString &change, int mode, const QString &type = QString());
 
     private:
         Ui::ChecksumSearch ui;
         KDialog *m_parent;
         QStandardItemModel *m_model;
-        bool m_selectionChanged;
-        KUrl m_url;
+        QStringList m_modes;
+        QStringListModel *m_modesModel;
+        QStringListModel *m_typesModel;
 };
 
 #endif // DLGCHECKSUMSEARCH_H
