@@ -31,6 +31,8 @@
 
 #include <kde_file.h>
 
+const int SPEEDTIMER = 2000;//2 seconds...
+
 DataSource::DataSource(TransferDataSource *transferDataSource)
   : m_dataSource(transferDataSource),
     m_paralellSegments(0),
@@ -128,7 +130,7 @@ void DataSourceFactory::init()
     if (!m_speedTimer)
     {
         m_speedTimer = new QTimer(this);
-        m_speedTimer->setInterval(2 * 1000);//2 seconds
+        m_speedTimer->setInterval(SPEEDTIMER);
         connect(m_speedTimer, SIGNAL(timeout()), this, SLOT(speedChanged()));
     }
 
