@@ -29,7 +29,7 @@ MirrorSettings::MirrorSettings(QWidget *parent, TransferHandler *handler, const 
     m_model = new MirrorModel(this);
     m_model->setMirrors(m_transfer->availableMirrors(m_file));
 
-    QItemDelegate *delegate = new MirrorDelegate(this);
+    MirrorDelegate *delegate = new MirrorDelegate(this);
 
     QWidget *widget = new QWidget(this);
     ui.setupUi(widget);

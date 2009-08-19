@@ -20,14 +20,14 @@
 #ifndef MIRRORMODEL_H
 #define MIRRORMODEL_H
 
-#include <QtGui/QItemDelegate>
+#include <QtGui/QStyledItemDelegate>
 
 #include <KIcon>
 #include <KUrl>
 
 class QSortFilterProxyModel;
 
-class MirrorDelegate : public QItemDelegate
+class MirrorDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 

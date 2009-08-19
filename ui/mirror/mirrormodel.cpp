@@ -32,13 +32,13 @@
 #include <KDebug>
 
 MirrorDelegate::MirrorDelegate(QObject *parent)
-  : QItemDelegate(parent),
+  : QStyledItemDelegate(parent),
     m_countrySort(0)
 {
 }
 
 MirrorDelegate::MirrorDelegate(QSortFilterProxyModel *countrySort, QObject *parent)
-  : QItemDelegate(parent),
+  : QStyledItemDelegate(parent),
     m_countrySort(countrySort)
 {
 
@@ -53,9 +53,6 @@ QWidget *MirrorDelegate::createEditor(QWidget *parent, const QStyleOptionViewIte
         if (index.column() == MirrorItem::Url)
         {
             KLineEdit *line = new KLineEdit(parent);
-
-            const KUrl url = index.model()->data(index, Qt::EditRole).toUrl();
-            line->setUrl(url);
 
             return line;
         }
