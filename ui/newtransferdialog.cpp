@@ -300,7 +300,11 @@ void NewTransferDialog::showNewTransferDialog(const KUrl::List &list, QWidget * 
             dialog = factory->createNewTransferDialog(url, suggestedFileName, !KGet::groupsFromExceptions(url).isEmpty() ? KGet::groupsFromExceptions(url).first() : 0);
             if (dialog)
             {
-                dialog->setParent(parent);
+                if(parent) {
+                    KWindowInfo info = KWindowSystem::windowInfo(parent->winId(), NET::WMDesktop, NET::WMDesktop);
+                    KWindowSystem::setCurrentDesktop(info.desktop());
+                    KWindowSystem::forceActiveWindow(parent->winId());
+                }
                 dialog->exec();
                 return;
             }
