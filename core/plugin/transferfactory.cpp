@@ -22,3 +22,45 @@ TransferFactory::TransferFactory(QObject *parent, const QVariantList &args)
 
 }
 
+Transfer * TransferFactory::createTransfer(const KUrl &srcUrl, const KUrl &destUrl,
+                                               TransferGroup * parent,
+                                               Scheduler * scheduler,
+                                               const QDomElement * n)
+{
+    Q_UNUSED(srcUrl)
+    Q_UNUSED(destUrl)
+    Q_UNUSED(parent)
+    Q_UNUSED(scheduler)
+    Q_UNUSED(n)
+    return 0;
+}
+
+TransferHandler * TransferFactory::createTransferHandler(Transfer * transfer, Scheduler * scheduler)
+{
+    return new TransferHandler(transfer, scheduler);
+}
+
+QWidget * TransferFactory::createDetailsWidget(TransferHandler * transfer)
+{
+    Q_UNUSED(transfer)
+    return 0;
+}
+        
+KDialog * TransferFactory::createNewTransferDialog(const KUrl &srcUrl)
+{
+    Q_UNUSED(srcUrl)
+    return 0;
+}
+
+const QList<KAction *> TransferFactory::actions(TransferHandler *handler)
+{
+    Q_UNUSED(handler)
+    return QList<KAction *>();
+}
+
+TransferDataSource * TransferFactory::createTransferDataSource(const KUrl &srcUrl, const QDomElement &type)
+{
+    Q_UNUSED(srcUrl)
+    Q_UNUSED(type)
+    return 0;
+}
