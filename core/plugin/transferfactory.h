@@ -64,7 +64,7 @@ class KGET_EXPORT TransferFactory : public KGetPlugin
 
         virtual QWidget * createDetailsWidget(TransferHandler * transfer);
         
-        virtual KDialog * createNewTransferDialog(const KUrl &srcUrl);
+        virtual KDialog * createNewTransferDialog(const KUrl &srcUrl, const QString &suggestedFileName = QString(), TransferGroupHandler * defaultGroup = 0);
 
         virtual const QList<KAction *> actions(TransferHandler *handler = 0);
 

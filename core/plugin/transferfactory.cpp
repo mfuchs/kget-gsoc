@@ -1,6 +1,7 @@
 /* This file is part of the KDE project
 
    Copyright (C) 2004 Dario Massarin <nekkar@libero.it>
+   Copyright (C) 2009 Lukas Appelhans <l.appelhans@gmx.de>
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public
@@ -46,9 +47,11 @@ QWidget * TransferFactory::createDetailsWidget(TransferHandler * transfer)
     return 0;
 }
         
-KDialog * TransferFactory::createNewTransferDialog(const KUrl &srcUrl)
+KDialog * TransferFactory::createNewTransferDialog(const KUrl &srcUrl, const QString &suggestedFileName, TransferGroupHandler * defaultGroup)
 {
     Q_UNUSED(srcUrl)
+    Q_UNUSED(suggestedFileName)
+    Q_UNUSED(defaultGroup)
     return 0;
 }
 
