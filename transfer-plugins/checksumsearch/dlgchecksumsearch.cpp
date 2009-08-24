@@ -18,7 +18,6 @@
 ***************************************************************************/
 
 #include "dlgchecksumsearch.h"
-#include "adddlg.h"
 
 #include "kget_export.h"
 
@@ -31,6 +30,50 @@
 #include <QtGui/QStringListModel>
 
 KGET_EXPORT_PLUGIN_CONFIG(DlgChecksumSettingsWidget)
+
+const KUrl ChecksumSearchAddDlg::URL = KUrl("http://www.example.com/file.zip");
+
+ChecksumSearchAddDlg::ChecksumSearchAddDlg(QStringListModel *modesModel, QStringListModel *typesModel, QWidget *parent, Qt::WFlags flags)
+  : KDialog(parent, flags),
+    m_modesModel(modesModel),
+    m_typesModel(typesModel)
+{
+    setCaption(i18n("Add item"));
+    showButtonSeparator(true);
+    QWidget *widget = new QWidget(this);
+    ui.setupUi(widget);
+    setMainWidget(widget);
+
+    if (m_modesModel)
+    {
+        ui.mode->setModel(m_modesModel);
+    }
+    if (m_typesModel)
+    {
+        ui.type->setModel(m_typesModel);
+    }
+
+    slotUpdate();
+
+    connect(ui.change, SIGNAL(userTextChanged(QString)), this, SLOT(slotUpdate()));
+    connect(ui.mode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotUpdate()));
+    connect(this, SIGNAL(accepted()), this, SLOT(slotAccpeted()));
+}
+
+void ChecksumSearchAddDlg::slotUpdate()
+{
+    enableButtonOk(!ui.change->text().isEmpty());
+
+    const ChecksumSearch::UrlChangeMode mode = static_cast<ChecksumSearch::UrlChangeMode>(ui.mode->currentIndex());
+    const KUrl modifiedUrl = ChecksumSearch::createUrl(URL, ui.change->text(), mode);
+    const QString text = i18n("%1 would become %2", URL.prettyUrl(), modifiedUrl.prettyUrl());
+    ui.label->setText(text);
+}
+
+void ChecksumSearchAddDlg::slotAccpeted()
+{
+    emit addItem(ui.change->text(), ui.mode->currentIndex(), ui.type->currentText());
+}
 
 ChecksumDelegate::ChecksumDelegate(QObject *parent)
   : QStyledItemDelegate(parent),
@@ -176,7 +219,7 @@ DlgChecksumSettingsWidget::~DlgChecksumSettingsWidget()
 
 void DlgChecksumSettingsWidget::slotAdd()
 {
-    AddDlg *dialog = new AddDlg(m_modesModel, m_typesModel, this);
+    ChecksumSearchAddDlg *dialog = new ChecksumSearchAddDlg(m_modesModel, m_typesModel, this);
     connect(dialog, SIGNAL(addItem(QString,int,QString)), this, SLOT(slotAddItem(QString,int,QString)));
 
     dialog->show();

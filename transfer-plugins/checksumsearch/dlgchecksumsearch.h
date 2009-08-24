@@ -21,6 +21,7 @@
 #define DLGCHECKSUMSEARCH_H
 
 #include "ui_checksumsearch.h"
+#include "ui_checksumsearchadddlg.h"
 
 #include "checksumsearchtransferdatasource.h"
 
@@ -30,6 +31,40 @@
 
 class QStandardItemModel;
 class QStringListModel;
+
+class ChecksumSearchAddDlg : public KDialog
+{
+    Q_OBJECT
+
+    public:
+        ChecksumSearchAddDlg(QStringListModel *modesModel, QStringListModel *typesModel, QWidget *parent = 0, Qt::WFlags flags = 0);
+
+    signals:
+        /**
+        * Emitted when the dialog gets accepted
+        * @param change the string that should change the source url by mode
+        * @param mode the change mode
+        * @param type the checksum type, can be an empty string
+        */
+        void addItem(const QString &change, int mode, const QString &type);
+
+    private slots:
+        /**
+        * Enables or disables buttons depending on if the user entered text or not, also changes
+        * the label etc.
+        */
+        void slotUpdate();
+
+        void slotAccpeted();
+
+    private:
+        Ui::ChecksumSearchAddDlg ui;
+
+        QStringListModel *m_modesModel;
+        QStringListModel *m_typesModel;
+
+        static const KUrl URL;
+};
 
 class ChecksumDelegate : public QStyledItemDelegate
 {
