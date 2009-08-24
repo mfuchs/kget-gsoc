@@ -96,6 +96,8 @@ class Metalink : public QObject, public Transfer
         KGetMetalink::Metalink m_metalink;
         QHash<KUrl, DataSourceFactory*> m_dataSourceFactory;
         bool m_ready;
+        int m_speedCount;
+        int m_tempAverageSpeed;
         mutable int m_averageSpeed;
 #ifdef HAVE_NEPOMUK
         MetaNepomukHandler *m_nepHandler;

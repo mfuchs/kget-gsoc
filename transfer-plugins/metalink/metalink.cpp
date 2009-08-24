@@ -43,6 +43,8 @@ Metalink::Metalink(TransferGroup * parent, TransferFactory * factory,
       m_dialog(0),
       m_currentFiles(0),
       m_ready(false),
+      m_speedCount(0),
+      m_tempAverageSpeed(0),
       m_averageSpeed(0)
 #ifdef HAVE_NEPOMUK
       , m_nepHandler(0)
@@ -391,15 +393,13 @@ void Metalink::speedChanged()
     setTransferChange(Tc_DownloadSpeed, true);
 
     //calculate the average of the last three speeds
-    static int count = 0;
-    static int avgSpeed = 0;
-    avgSpeed += m_downloadSpeed;
-    ++count;
-    if (count == 3)
+    m_tempAverageSpeed += m_downloadSpeed;
+    ++m_speedCount;
+    if (m_speedCount == 3)
     {
-        m_averageSpeed = avgSpeed / 3;
-        count = 0;
-        avgSpeed = 0;
+        m_averageSpeed = m_tempAverageSpeed / 3;
+        m_speedCount = 0;
+        m_tempAverageSpeed = 0;
     }
 }
 
@@ -468,7 +468,9 @@ void Metalink::slotStatus(Job::Status status)
 
                 if (brokenFiles.count())
                 {
-                    if (KMessageBox::warningYesNoCancelList(0, i18n("The cownload could not be verified, try to repair it?"), brokenFiles))
+                    if (KMessageBox::warningYesNoCancelList(0,
+                        i18n("The cownload could not be verified, try to repair it?"),
+                        brokenFiles) == KMessageBox::Yes)
                     {
                         if (repair())
                         {
