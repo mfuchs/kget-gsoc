@@ -424,6 +424,12 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
                     connect(source, SIGNAL(data(KIO::fileoffset_t, const QByteArray&, bool&)), this, SLOT(slotWriteData(KIO::fileoffset_t, const QByteArray&, bool&)));
 
                     assignSegment(source);
+
+                    //the job is already running, so also start the TransferDataSource
+                    if (!m_assignTried && !m_startTried && m_putJob && m_open && (m_status == Job::Running))
+                    {
+                        source->start();
+                    }
                 }
                 else
                 {
@@ -435,6 +441,7 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
                 //increase the number of alowed mirrors as the user wants to use this one!
                 ++m_maxMirrorsUsed;
                 addMirror(url, used, numParalellConnections, usedDefined);
+                return;
             }
             else
             {
@@ -457,10 +464,14 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
 
 void DataSourceFactory::removeMirror(const KUrl &url)
 {
+    kDebug(5001) << "Removing mirror: " << url;
     if (m_sources.contains(url))
     {
         DataSource *source = m_sources[url];
         source->transferDataSource()->stop();
+        m_sources.remove(url);
+        m_unusedMirrors[url] = source->paralellSegments();
+        delete source;
 
         QHash<int, KUrl>::iterator it;
         QHash<int, KUrl>::iterator itEnd = m_assignedChunks.end();
@@ -476,10 +487,6 @@ void DataSourceFactory::removeMirror(const KUrl &url)
                 ++it;
             }
         }
-
-        m_sources.remove(url);
-        m_unusedMirrors[url] = source->paralellSegments();
-        delete source;
     }
 }
 
