@@ -150,7 +150,7 @@ class Url
           {
           }
 
-        bool operator<(const Url &other) const {return (this->preference < other.preference);}//TODO location einbauen mit #include <klocale.h>?//TODO testen ob funzt
+        bool operator<(const Url &other) const {return (this->preference < other.preference);}//TODO use also the location information and compare that with the current location being set or maybe using the dataengine to get the corrent location
 
         void load(const QDomElement &e);
         void save(QDomElement &e) const;
