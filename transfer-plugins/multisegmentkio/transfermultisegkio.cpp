@@ -25,6 +25,7 @@
 #include <KIO/DeleteJob>
 #include <KIO/NetAccess>
 #include <klocale.h>
+#include <KMessageBox>
 #include <kdebug.h>
 
 #include <QDomElement>
@@ -202,6 +203,17 @@ void TransferMultiSegKio::slotStatus(Job::Status status)
     {
         QModelIndex statusIndex = m_fileModel->index(m_dest, FileItem::Status);
         m_fileModel->setData(statusIndex, status);
+    }
+
+    if ((status == Job::Finished) && verifier()->isVerifyable())
+    {
+        if (!verifier()->verify() &&
+            (KMessageBox::warningYesNo(0,
+                                       i18n("The download could not be verfied. Do you want to repair it?"),
+                                       i18n("Verification failed.")) == KMessageBox::Yes))
+        {
+            repair();
+        }
     }
 }
 

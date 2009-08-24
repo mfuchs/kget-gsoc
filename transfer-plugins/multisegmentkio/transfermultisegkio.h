@@ -52,7 +52,7 @@ class TransferMultiSegKio : public QObject, public Transfer
          * @param file for which to get the verifier
          * @return Verifier that allows you to add checksums manually verify a file etc.
          */
-        virtual Verifier *verifier(const KUrl &file);
+        virtual Verifier *verifier(const KUrl &file = KUrl());
 
         FileModel *fileModel();
 
