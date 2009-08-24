@@ -152,6 +152,12 @@ void MirrorDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionVie
     editor->setGeometry(option.rect);
 }
 
+QSize MirrorDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    //make the sizeHint a little bit nicer to have more beautiful editors
+    return QStyledItemDelegate::sizeHint(option, index) + QSize(0, 7);
+}
+
 
 MirrorItem::MirrorItem()
   : m_checked(Qt::Unchecked),
