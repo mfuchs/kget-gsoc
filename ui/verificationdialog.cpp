@@ -28,6 +28,41 @@
 #include "core/transferhandler.h"
 #include "core/verifier.h"
 
+VerificationAddDlg::VerificationAddDlg(VerificationModel *model, QWidget *parent, Qt::WFlags flags)
+  : KDialog(parent, flags),
+    m_model(model)
+{
+    setCaption(i18n("Add chechksum"));
+    showButtonSeparator(true);
+    QWidget *widget = new QWidget(this);
+    ui.setupUi(widget);
+    setMainWidget(widget);
+
+    ui.hashTypes->addItems(Verifier::supportedVerficationTypes());
+
+    updateButton();
+
+    connect(ui.newHash, SIGNAL(userTextChanged(const QString &)), this, SLOT(updateButton()));
+    connect(ui.hashTypes, SIGNAL(currentIndexChanged(int)), this, SLOT(updateButton()));
+    connect(this, SIGNAL(accepted()), this, SLOT(addChecksum()));
+}
+
+void VerificationAddDlg::updateButton()
+{
+    const QString type = ui.hashTypes->currentText();
+    const QString hash = ui.newHash->text();
+
+    enableButtonOk(Verifier::isChecksum(type, hash));
+}
+
+void VerificationAddDlg::addChecksum()
+{
+    if (m_model)
+    {
+        m_model->addChecksum(ui.hashTypes->currentText(), ui.newHash->text());
+    }
+}
+
 VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfer, const KUrl &file)
   : KDialog(parent),
     m_transfer(transfer),
@@ -47,22 +82,17 @@ VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfe
     ui.setupUi(widget);
     setMainWidget(widget);
     ui.add->setGuiItem(KStandardGuiItem::add());
-    ui.add->setEnabled(false);
     ui.remove->setGuiItem(KStandardGuiItem::remove());
-    ui.remove->setEnabled(false);
-    ui.verify->setEnabled(false);
-    ui.hashTypes->addItems(Verifier::supportedVerficationTypes());
 
     if (m_model)
     {
         ui.usedHashes->setModel(m_model);
+        updateButtons();
 
         m_fileModel = m_transfer->fileModel();
 
         connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(updateButtons()));
         connect(ui.usedHashes, SIGNAL(clicked(const QModelIndex&)), this, SLOT(updateButtons()));
-        connect(ui.newHash, SIGNAL(userTextChanged(const QString &)), this, SLOT(updateButtons()));
-        connect(ui.hashTypes, SIGNAL(currentIndexChanged(int)), this, SLOT(updateButtons()));
         connect(ui.add, SIGNAL(pressed()), this, SLOT(addPressed()));
         connect(ui.remove, SIGNAL(pressed()), this, SLOT(removePressed()));
         connect(ui.verify, SIGNAL(pressed()), this, SLOT(verifyPressed()));
@@ -71,31 +101,9 @@ VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfe
     setButtons(KDialog::Ok);
 }
 
-VerificationDialog::~VerificationDialog()
-{
-}
-
 void VerificationDialog::updateButtons()
 {
-    const QString type = ui.hashTypes->currentText();
-    const QString hash = ui.newHash->text();
-    bool enableAdd = !hash.isEmpty() && !type.isEmpty();
-    if (enableAdd)
-    {
-        if (!m_diggestLength.contains(type))
-        {
-            m_diggestLength[type] = Verifier::diggestLength(type);
-        }
-
-        enableAdd &= (hash.length() == m_diggestLength[type]);
-        if (enableAdd)
-        {
-            enableAdd = Verifier::isChecksum(type, hash);
-        }
-    }
-
-    ui.add->setEnabled(enableAdd);
-    ui.remove->setEnabled(ui.usedHashes->selectionModel()->selectedIndexes().count());
+    ui.remove->setEnabled(m_model && ui.usedHashes->selectionModel()->selectedIndexes().count());
 
     //check if the download finished and if the selected indexes are verifyable
     bool verifyEnabled = false;
@@ -129,7 +137,8 @@ void VerificationDialog::removePressed()
 
 void VerificationDialog::addPressed()
 {
-    m_model->addChecksum(ui.hashTypes->currentText(), ui.newHash->text());
+    VerificationAddDlg *dialog = new VerificationAddDlg(m_model, this);
+    dialog->show();
 }
 
 void VerificationDialog::verifyPressed()
@@ -147,9 +156,13 @@ void VerificationDialog::verifyPressed()
 
     if (verified)
     {
-        KMessageBox::information(this, i18n("The downloaded file was successfully verified."), i18n("Verification successful"));
+        KMessageBox::information(this,
+                                 i18n("The downloaded file was successfully verified."),
+                                 i18n("Verification successful"));
     }
-    else if (KMessageBox::warningYesNo(this, i18n("The downloaded file could not be verified. Do you want to repair it?"), i18n("Verification failed")))
+    else if (KMessageBox::warningYesNo(this,
+             i18n("The downloaded file could not be verified. Do you want to repair it?"),
+             i18n("Verification failed")) == KMessageBox::Yes)
     {
         m_transfer->repair(m_file);
     }

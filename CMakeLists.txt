@@ -225,6 +225,7 @@ kde4_add_ui_files(kget_SRCS
    ui/metalinkcreator/urlwidget.ui
    ui/renamefile.ui
    ui/verificationdialog.ui
+   ui/verificationadddlg.ui
 )
 
 if(HAVE_NEPOMUK)

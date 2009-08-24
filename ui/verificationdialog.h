@@ -21,6 +21,7 @@
 #define VERIFICATIONDIALOG_H
 
 #include "ui_verificationdialog.h"
+#include "ui_verificationadddlg.h"
 
 #include <KDialog>
 
@@ -29,12 +30,29 @@ class TransferHandler;
 class Verifier;
 class VerificationModel;
 
+class VerificationAddDlg : public KDialog
+{
+    Q_OBJECT
+
+    public:
+        VerificationAddDlg(VerificationModel *model, QWidget *parent = 0, Qt::WFlags flags = 0);
+
+    private slots:
+        void addChecksum();
+        void updateButton();
+
+    private:
+        Ui::VerificationAddDlg ui;
+        VerificationModel *m_model;
+        QHash<QString, int> m_diggestLength;
+};
+
 class VerificationDialog : public KDialog
 {
     Q_OBJECT
+
     public:
         VerificationDialog(QWidget *parent, TransferHandler *transfer, const KUrl &file);
-        ~VerificationDialog();
 
     private slots:
         void updateButtons();
@@ -49,7 +67,6 @@ class VerificationDialog : public KDialog
         VerificationModel *m_model;
         FileModel *m_fileModel;
         Ui::VerificationDialog ui;
-        QHash<QString, int> m_diggestLength;
 };
 
 #endif //VERIFICATIONDIALOG_H
