@@ -26,6 +26,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QStringList>
 #include <QtCore/QAbstractTableModel>
+#include <QtGui/QStyledItemDelegate>
 #include <QtXml/QDomElement>
 
 #ifdef HAVE_QCA2
@@ -37,6 +38,23 @@
 class QFile;
 class QStandardItemModel;
 class TransferHandler;
+//TODO create a delegate!!! and also check when setting the data if it is correct
+class KGET_EXPORT VerificationDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+    public:
+        VerificationDelegate(QObject *parent = 0);
+
+        QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+        void setEditorData(QWidget *editor, const QModelIndex &index) const;
+        void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
+        void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+        QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+    private:
+        QStringList m_hashTypes;
+};
 
 class KGET_EXPORT VerificationModel : public QAbstractTableModel
 {
@@ -52,6 +70,8 @@ class KGET_EXPORT VerificationModel : public QAbstractTableModel
         };
 
         QVariant data(const QModelIndex &index, int role) const;
+        Qt::ItemFlags flags(const QModelIndex &index) const;
+        bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
         QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
         int rowCount(const QModelIndex &parent = QModelIndex()) const;
         int columnCount(const QModelIndex &parent = QModelIndex()) const;

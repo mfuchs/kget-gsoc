@@ -21,8 +21,11 @@
 
 #include <QtCore/QFile>
 #include <QtGui/QStandardItemModel>
+
 #include <KCodecs>
+#include <KComboBox>
 #include <KLocale>
+#include <KLineEdit>
 
 static const QStringList s_supported = (QStringList() << "sha512" << "sha384" << "sha256" << "ripmed160" << "sha1" << "md5" << "md4");
 static const int s_digestLength[] = {128, 96, 64, 40, 40, 32, 32};
@@ -33,6 +36,88 @@ static QCA::Initializer s_qcaInit;
 
 static const QString s_md5 = QString("md5");
 static const int s_partSize = 512 * 1024;
+
+
+VerificationDelegate::VerificationDelegate(QObject *parent)
+  : QStyledItemDelegate(parent),
+    m_hashTypes(Verifier::supportedVerficationTypes())
+{
+}
+
+QWidget *VerificationDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(option)
+
+    if (index.isValid())
+    {
+        if (index.column() == VerificationModel::Type)
+        {
+            if (m_hashTypes.count())
+            {
+                KComboBox *hashTypes = new KComboBox(parent);
+                hashTypes->addItems(m_hashTypes);
+
+                return hashTypes;
+            }
+        }
+        else if (index.column() == VerificationModel::Checksum)
+        {
+            KLineEdit *line = new KLineEdit(parent);
+
+            return line;
+        }
+    }
+
+    return 0;
+}
+
+void VerificationDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    if (index.isValid() && editor)
+    {
+        if (index.column() == VerificationModel::Type)
+        {
+            KComboBox *hashTypes = static_cast<KComboBox*>(editor);
+            const QString hashType = index.model()->data(index).toString();
+            hashTypes->setCurrentItem(hashType);
+        }
+        else if (index.column() == VerificationModel::Checksum)
+        {
+            KLineEdit *line = static_cast<KLineEdit*>(editor);
+            const QString checksum = index.model()->data(index).toString();
+            line->setText(checksum);
+        }
+    }
+}
+
+void VerificationDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    if (index.isValid() && editor && model)
+    {
+        if (index.column() == VerificationModel::Type)
+        {
+            KComboBox *hashTypes = static_cast<KComboBox*>(editor);
+            model->setData(index, hashTypes->currentText());
+        }
+        else if (index.column() == VerificationModel::Checksum)
+        {
+            KLineEdit *line = static_cast<KLineEdit*>(editor);
+            model->setData(index, line->text());
+        }
+    }
+}
+
+void VerificationDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(index)
+    editor->setGeometry(option.rect);
+}
+
+QSize VerificationDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    //make the sizeHint a little bit nicer to have more beautiful editors
+    return QStyledItemDelegate::sizeHint(option, index) + QSize(0, 7);
+}
 
 
 VerificationModel::VerificationModel(QObject *parent)
@@ -57,6 +142,57 @@ QVariant VerificationModel::data(const QModelIndex &index, int role) const
     }
 
     return QVariant();
+}
+
+Qt::ItemFlags VerificationModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid() && (index.row() >= rowCount()))
+    {
+        return 0;
+    }
+
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    if (index.row() == VerificationModel::Type)
+    {
+        flags |= Qt::ItemIsEditable;
+    }
+    else if (index.row() == VerificationModel::Checksum)
+    {
+        flags |= Qt::ItemIsEditable;
+    }
+
+    return flags;
+}
+
+bool VerificationModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!index.isValid() || index.row() >= m_types.count())
+    {
+        return false;
+    }
+
+    if ((index.row() == VerificationModel::Type) && role == Qt::EditRole)
+    {
+        const QString type = value.toString();
+        if (Verifier::supportedVerficationTypes().contains(type))
+        {
+            m_types[index.row()] = type;
+            return true;
+        }
+    }
+    else if ((index.row() == VerificationModel::Checksum) && role == Qt::EditRole)
+    {
+        const QModelIndex typeIndex = index.model()->index(index.row(), VerificationModel::Type);
+        const QString type = index.model()->data(typeIndex).toString();
+        const QString checksum = value.toString();
+        if (Verifier::isChecksum(type, checksum))
+        {
+            m_checksums[index.row()] = checksum;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int VerificationModel::rowCount(const QModelIndex &parent) const
