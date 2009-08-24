@@ -187,7 +187,10 @@ void TransferKio::slotResult( KJob * kioJob )
 
     if ((status() == Job::Finished) && verifier()->isVerifyable())
     {
-        if (!verifier()->verify() && KMessageBox::warningYesNo(0, i18n("The download could not be verfied. Do you want to repair it?"), i18n("Verification failed.")))
+        if (!verifier()->verify() &&
+            (KMessageBox::warningYesNo(0,
+                                       i18n("The download could not be verfied. Do you want to repair it?"),
+                                       i18n("Verification failed.")) == KMessageBox::Yes))
         {
             m_broken = true;
             repair();
