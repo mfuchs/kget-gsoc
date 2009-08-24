@@ -23,9 +23,26 @@
 #include <KDialog>
 
 #include "ui_mirrorsettings.h"
+#include "ui_mirroradddlg.h"
 
 class TransferHandler;
 class MirrorModel;
+
+class MirrorAddDlg : public KDialog
+{
+    Q_OBJECT
+
+    public:
+        MirrorAddDlg(MirrorModel *model, QWidget *parent = 0, Qt::WFlags flags = 0);
+
+    private slots:
+        void addMirror();
+        void updateButton(const QString &text = QString());
+
+    private:
+        Ui::MirrorAddDlg ui;
+        MirrorModel *m_model;
+};
 
 class MirrorSettings : public KDialog
 {
@@ -33,12 +50,12 @@ class MirrorSettings : public KDialog
 
     public:
         MirrorSettings(QWidget *parent, TransferHandler *handler, const KUrl &file);
-        ~MirrorSettings();
 
     private slots:
-        void addMirror();
+        void updateButton();
+        void addPressed();
+        void removeMirror();
         void save();
-        void updateButton(const QString &text);
 
     private:
         TransferHandler *m_transfer;

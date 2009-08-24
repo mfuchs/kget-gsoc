@@ -215,6 +215,7 @@ kde4_add_ui_files(kget_SRCS
    ui/transfersettingsdialog.ui
    ui/linkview/importlinkdialog.ui
    ui/mirror/mirrorsettings.ui
+   ui/mirror/mirroradddlg.ui
    ui/metalinkcreator/introduction.ui
    ui/metalinkcreator/general.ui
    ui/metalinkcreator/general2.ui

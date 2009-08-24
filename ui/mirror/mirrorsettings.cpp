@@ -21,6 +21,38 @@
 #include "mirrormodel.h"
 #include "core/transferhandler.h"
 
+MirrorAddDlg::MirrorAddDlg(MirrorModel *model, QWidget *parent, Qt::WFlags flags)
+  : KDialog(parent, flags),
+    m_model(model)
+{
+    setCaption(i18n("Add mirror"));
+    showButtonSeparator(true);
+    QWidget *widget = new QWidget(this);
+    ui.setupUi(widget);
+    setMainWidget(widget);
+
+    updateButton();
+
+    connect(ui.url, SIGNAL(textChanged(const QString&)), this, SLOT(updateButton(QString)));
+    connect(this, SIGNAL(accepted()), this, SLOT(addMirror()));
+}
+
+void MirrorAddDlg::updateButton(const QString &text)
+{
+    bool enabled = false;
+    KUrl url(text);
+    if (url.isValid() && !url.protocol().isEmpty() && url.hasPath())
+    {
+        enabled = true;
+    }
+    enableButtonOk(enabled);
+}
+
+void MirrorAddDlg::addMirror()
+{
+    m_model->addMirror(KUrl(ui.url->text()), ui.numConnections->value());
+}
+
 MirrorSettings::MirrorSettings(QWidget *parent, TransferHandler *handler, const KUrl &file)
   : KDialog(parent),
     m_transfer(handler),
@@ -29,51 +61,53 @@ MirrorSettings::MirrorSettings(QWidget *parent, TransferHandler *handler, const 
     m_model = new MirrorModel(this);
     m_model->setMirrors(m_transfer->availableMirrors(m_file));
 
-    MirrorDelegate *delegate = new MirrorDelegate(this);
-
     QWidget *widget = new QWidget(this);
     ui.setupUi(widget);
+    ui.add->setGuiItem(KStandardGuiItem::add());
+    ui.remove->setGuiItem(KStandardGuiItem::remove());
     ui.treeView->setModel(m_model);
     ui.treeView->resizeColumnToContents(MirrorItem::Used);
     ui.treeView->resizeColumnToContents(MirrorItem::Url);
     ui.treeView->hideColumn(MirrorItem::Preference);
     ui.treeView->hideColumn(MirrorItem::Country);
-    ui.treeView->setItemDelegate(delegate);
-    ui.add->setEnabled(false);
+    ui.treeView->setItemDelegate(new MirrorDelegate(this));
 
-    connect(ui.url, SIGNAL(textChanged(const QString&)), this, SLOT(updateButton(QString)));
-    connect(ui.add, SIGNAL(pressed()), this, SLOT(addMirror()));
-    connect(this, SIGNAL(applyClicked()), this, SLOT(save()));
-    connect(this, SIGNAL(okClicked()), this, SLOT(save()));
+    updateButton();
+
+    connect(ui.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this, SLOT(updateButton()));
+    connect(ui.add, SIGNAL(pressed()), this, SLOT(addPressed()));
+    connect(ui.remove, SIGNAL(pressed()), this, SLOT(removeMirror()));
+    connect(this, SIGNAL(finished()), this, SLOT(save()));
 
     resize(700, 400);
     setMainWidget(widget);
     setCaption(i18n("Modify the used mirrors."));
+    setButtons(KDialog::Ok);
 }
 
-MirrorSettings::~MirrorSettings()
+void MirrorSettings::updateButton()
 {
+    ui.remove->setEnabled(ui.treeView->selectionModel()->hasSelection());
 }
 
-void MirrorSettings::addMirror()
+void MirrorSettings::addPressed()
 {
-    m_model->addMirror(KUrl(ui.url->text()), ui.numConnections->value());
+    MirrorAddDlg *dialog = new MirrorAddDlg(m_model, this);
+    dialog->show();
+}
+
+void MirrorSettings::removeMirror()
+{
+    QModelIndexList selected = ui.treeView->selectionModel()->selectedRows();
+    foreach(QModelIndex index, selected)
+    {
+        m_model->removeRow(index.row());
+    }
 }
 
 void MirrorSettings::save()
 {
     m_transfer->setAvailableMirrors(m_file, m_model->availableMirrors());
-}
-
-void MirrorSettings::updateButton(const QString &text)
-{
-    bool enabled = false;
-    KUrl url(text);
-    if (url.isValid() && !url.protocol().isEmpty() && url.hasPath())
-    {
-        enabled = true;
-    }
-    ui.add->setEnabled(enabled);
 }
 
 #include "mirrorsettings.moc"
