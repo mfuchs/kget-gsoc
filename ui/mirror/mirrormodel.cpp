@@ -29,8 +29,6 @@
 #include <KLocale>
 #include <KStandardDirs>
 
-#include <KDebug>
-
 MirrorDelegate::MirrorDelegate(QObject *parent)
   : QStyledItemDelegate(parent),
     m_countrySort(0)
@@ -151,7 +149,7 @@ void MirrorDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, co
 void MirrorDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     Q_UNUSED(index)
-    editor->setGeometry(option.rect);//TODO set a better geometry, like the standard is (when not using a delegate)
+    editor->setGeometry(option.rect);
 }
 
 
@@ -437,7 +435,7 @@ bool MirrorModel::removeRows(int row, int count, const QModelIndex &parent)
 
 void MirrorModel::addMirror(const KUrl& url, int numConnecitons)
 {
-    addMirror(url, 0, numConnecitons, QString());
+    addMirror(url, numConnecitons, 0, QString());
 }
 
 void MirrorModel::addMirror(const KUrl &url, int preference, const QString &countryCode)
@@ -445,7 +443,7 @@ void MirrorModel::addMirror(const KUrl &url, int preference, const QString &coun
     addMirror(url, 0, preference, countryCode);
 }
 
-void MirrorModel::addMirror(const KUrl& url, int numConnecitons, int preference, const QString& countryCode)
+void MirrorModel::addMirror(const KUrl &url, int numConnecitons, int preference, const QString &countryCode)
 {
     if (!url.isValid())
     {
@@ -467,6 +465,7 @@ void MirrorModel::addMirror(const KUrl& url, int numConnecitons, int preference,
 
     MirrorItem *item = new MirrorItem;
     m_data.append(item);
+    item->setData(MirrorItem::Used, Qt::Checked, Qt::CheckStateRole);//every newly added mirror is set to checked automatically
     item->setData(MirrorItem::Url, QVariant(url));
     item->setData(MirrorItem::Connections, numConnecitons);
     item->setData(MirrorItem::Preference, preference);
@@ -486,7 +485,7 @@ void MirrorModel::setMirrors(const QHash<KUrl, QPair<bool, int> > &mirrors)
         MirrorItem *item = new MirrorItem;
         item->setData(MirrorItem::Url, QVariant(it.key()));
         Qt::CheckState state = (*it).first ? Qt::Checked : Qt::Unchecked;
-        item->setData(MirrorItem::Used, state);
+        item->setData(MirrorItem::Used, state, Qt::CheckStateRole);
         item->setData(MirrorItem::Connections, (*it).second);
         m_data.append(item);
     }
@@ -499,9 +498,9 @@ QHash<KUrl, QPair<bool, int> > MirrorModel::availableMirrors() const
     QHash<KUrl, QPair<bool, int> > mirrors;
     foreach (MirrorItem *item, m_data)
     {
-        bool used = (item->data(MirrorItem::Used) == Qt::Checked) ? true : false;
+        bool used = (item->data(MirrorItem::Used, Qt::CheckStateRole).toInt() == Qt::Checked) ? true : false;
         const KUrl url = KUrl(item->data(MirrorItem::Url).toString());
-        mirrors[url] = QPair<bool, int>(used, item->data(MirrorItem::Connections).toInt());
+        mirrors[url] = QPair<bool, int>(used, item->data(MirrorItem::Connections, Qt::UserRole).toInt());
     }
     return mirrors;
 }
