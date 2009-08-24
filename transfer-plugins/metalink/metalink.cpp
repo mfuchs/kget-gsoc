@@ -35,7 +35,7 @@
 #include <QDomElement>
 #include <QSortFilterProxyModel>
 
-metalink::metalink(TransferGroup * parent, TransferFactory * factory,
+Metalink::Metalink(TransferGroup * parent, TransferFactory * factory,
                          Scheduler * scheduler, const KUrl & source, const KUrl & dest,
                          const QDomElement * e)
     : Transfer(parent, factory, scheduler, source, dest, e),
@@ -50,7 +50,7 @@ metalink::metalink(TransferGroup * parent, TransferFactory * factory,
 {
 }
 
-metalink::~metalink()
+Metalink::~Metalink()
 {
     if (m_dialog)
     {
@@ -58,7 +58,7 @@ metalink::~metalink()
     }
 }
 
-void metalink::init()
+void Metalink::init()
 {
 #ifdef HAVE_NEPOMUK
     if (!m_nepHandler)
@@ -71,7 +71,7 @@ void metalink::init()
     Transfer::init();
 }
 
-void metalink::start()
+void Metalink::start()
 {
     kDebug(5001) << "metalink::start";
 
@@ -98,7 +98,7 @@ void metalink::start()
     }
 }
 
-void metalink::metalinkInit(const KUrl &src, const QByteArray &data)
+void Metalink::metalinkInit(const KUrl &src, const QByteArray &data)
 {
     kDebug(5001);
     bool justDownloaded = !m_localMetalinkLocation.isValid();
@@ -224,7 +224,7 @@ void metalink::metalinkInit(const KUrl &src, const QByteArray &data)
     }
 }
 
-void metalink::filesSelected()
+void Metalink::filesSelected()
 {
     QModelIndexList files = fileModel()->fileIndexes(FileItem::File);
     foreach (const QModelIndex &index, files)
@@ -249,7 +249,7 @@ void metalink::filesSelected()
     }
 }
 
-void metalink::startMetalink()
+void Metalink::startMetalink()
 {
     if (m_ready)
     {
@@ -278,7 +278,7 @@ void metalink::startMetalink()
     }
 }
 
-void metalink::postDeleteEvent()
+void Metalink::postDeleteEvent()
 {
     if (status() != Job::Finished)//if the transfer is not finished, we delete the written files
     {
@@ -310,7 +310,7 @@ void metalink::postDeleteEvent()
 #endif //HAVE_NEPOMUK
 }
 
-void metalink::stop()
+void Metalink::stop()
 {
     kDebug(5001) << "metalink::Stop";
     if (m_ready && status() != Stopped)
@@ -323,12 +323,12 @@ void metalink::stop()
     }
 }
 
-bool metalink::isResumable() const
+bool Metalink::isResumable() const
 {
     return true;
 }
 
-void metalink::totalSizeChanged(KIO::filesize_t size)
+void Metalink::totalSizeChanged(KIO::filesize_t size)
 {
     m_totalSize = 0;
     foreach (DataSourceFactory *factory, m_dataSourceFactory)
@@ -353,7 +353,7 @@ void metalink::totalSizeChanged(KIO::filesize_t size)
     processedSizeChanged();
 }
 
-void metalink::processedSizeChanged()
+void Metalink::processedSizeChanged()
 {
     m_downloadedSize = 0;
     foreach (DataSourceFactory *factory, m_dataSourceFactory)
@@ -377,7 +377,7 @@ void metalink::processedSizeChanged()
     setTransferChange(flags, true);
 }
 
-void metalink::speedChanged()
+void Metalink::speedChanged()
 {
     m_downloadSpeed = 0;
     foreach (DataSourceFactory *factory, m_dataSourceFactory)
@@ -403,7 +403,7 @@ void metalink::speedChanged()
     }
 }
 
-int metalink::remainingTime() const
+int Metalink::remainingTime() const
 {
     if (!m_averageSpeed)
     {
@@ -412,7 +412,7 @@ int metalink::remainingTime() const
     return KIO::calculateRemainingSeconds(m_totalSize, m_downloadedSize, m_averageSpeed);
 }
 
-void metalink::slotStatus(Job::Status status)
+void Metalink::slotStatus(Job::Status status)
 {
     ChangesFlags flags = Tc_Status;
     bool changeStatus = true;
@@ -500,7 +500,7 @@ void metalink::slotStatus(Job::Status status)
     }
 }
 
-bool metalink::repair(const KUrl &file)
+bool Metalink::repair(const KUrl &file)
 {
     if (file.isValid())
     {
@@ -537,7 +537,7 @@ bool metalink::repair(const KUrl &file)
     return false;
 }
 
-void metalink::load(const QDomElement *element)
+void Metalink::load(const QDomElement *element)
 {
     Transfer::load(element);
 
@@ -597,7 +597,7 @@ void metalink::load(const QDomElement *element)
     m_ready = !m_dataSourceFactory.isEmpty();
 }
 
-void metalink::save(const QDomElement &element)
+void Metalink::save(const QDomElement &element)
 {
     Transfer::save(element);
 
@@ -610,7 +610,7 @@ void metalink::save(const QDomElement &element)
     }
 }
 
-Verifier *metalink::verifier(const KUrl &file)
+Verifier *Metalink::verifier(const KUrl &file)
 {
     if (!m_dataSourceFactory.contains(file))
     {
@@ -620,12 +620,12 @@ Verifier *metalink::verifier(const KUrl &file)
     return m_dataSourceFactory[file]->verifier();
 }
 
-QList<KUrl> metalink::files() const
+QList<KUrl> Metalink::files() const
 {
     return m_dataSourceFactory.keys();
 }
 
-FileModel *metalink::fileModel()
+FileModel *Metalink::fileModel()
 {
     if (!m_fileModel)
     {
@@ -650,7 +650,7 @@ FileModel *metalink::fileModel()
     return m_fileModel;
 }
 
-void metalink::slotRename(const KUrl &oldUrl, const KUrl &newUrl)
+void Metalink::slotRename(const KUrl &oldUrl, const KUrl &newUrl)
 {
     if (!m_dataSourceFactory.contains(oldUrl))
     {
@@ -668,7 +668,7 @@ void metalink::slotRename(const KUrl &oldUrl, const KUrl &newUrl)
     setTransferChange(Tc_FileName);
 }
 
-bool metalink::setDirectory(const KUrl &new_directory)
+bool Metalink::setDirectory(const KUrl &new_directory)
 {
     if (new_directory == directory())
     {
@@ -705,7 +705,7 @@ bool metalink::setDirectory(const KUrl &new_directory)
     return true;
 }
 
-QHash<KUrl, QPair<bool, int> > metalink::availableMirrors(const KUrl &file) const
+QHash<KUrl, QPair<bool, int> > Metalink::availableMirrors(const KUrl &file) const
 {
     QHash<KUrl, QPair<bool, int> > urls;
 
@@ -718,7 +718,7 @@ QHash<KUrl, QPair<bool, int> > metalink::availableMirrors(const KUrl &file) cons
 }
 
 
-void metalink::setAvailableMirrors(const KUrl &file, const QHash<KUrl, QPair<bool, int> > &mirrors)
+void Metalink::setAvailableMirrors(const KUrl &file, const QHash<KUrl, QPair<bool, int> > &mirrors)
 {
     if (!m_dataSourceFactory.contains(file))
     {

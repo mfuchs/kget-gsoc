@@ -25,16 +25,16 @@ class MetaNepomukHandler;
 
 class KDialog;
 
-class metalink : public QObject, public Transfer
+class Metalink : public QObject, public Transfer
 {
     Q_OBJECT
 
     public:
-        metalink(TransferGroup * parent, TransferFactory * factory,
+        Metalink(TransferGroup * parent, TransferFactory * factory,
                     Scheduler * scheduler, const KUrl & src, const KUrl & dest,
                     const QDomElement * e = 0);
 
-        ~metalink();
+        ~Metalink();
 
         void init();
 
