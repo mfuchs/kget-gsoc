@@ -16,9 +16,6 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" rowspan="4">
     <widget class="QTreeView" name="usedHashes">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
      <property name="rootIsDecorated">
       <bool>false</bool>
      </property>

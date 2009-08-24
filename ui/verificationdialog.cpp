@@ -87,9 +87,10 @@ VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfe
     if (m_model)
     {
         ui.usedHashes->setModel(m_model);
-        updateButtons();
-
+        ui.usedHashes->setItemDelegate(new VerificationDelegate(this));
         m_fileModel = m_transfer->fileModel();
+
+        updateButtons();
 
         connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(updateButtons()));
         connect(ui.usedHashes, SIGNAL(clicked(const QModelIndex&)), this, SLOT(updateButtons()));
