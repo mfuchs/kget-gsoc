@@ -1,6 +1,7 @@
 /* This file is part of the KDE project
 
    Copyright (C) 2008 Lukas Appelhans <l.appelhans@gmx.de>
+   Copyright (C) 2009 Matthias Fuchs <mat69@gmx.net>
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public
@@ -22,7 +23,8 @@
 TransferSettingsDialog::TransferSettingsDialog(QWidget *parent, TransferHandler *transfer)
   : KDialog(parent),
     m_transfer(transfer),
-    m_model(m_transfer->fileModel())
+    m_model(m_transfer->fileModel()),
+    m_proxy(0)
 {
     setCaption(i18n("Transfer Settings for %1", m_transfer->source().fileName()));
     showButtonSeparator(true);
@@ -46,11 +48,10 @@ TransferSettingsDialog::TransferSettingsDialog(QWidget *parent, TransferHandler 
     if (m_model)
     {
         m_model->watchCheckState();
-//         QSortFilterProxyModel *proxy = new QSortFilterProxyModel(this);
-//         proxy->setSourceModel(m_model);
-//         ui.treeView->setModel(proxy);
-        ui.treeView->setModel(m_model);
-//         ui.treeView->sortByColumn(0, Qt::AscendingOrder);
+        m_proxy = new QSortFilterProxyModel(this);
+        m_proxy->setSourceModel(m_model);
+        ui.treeView->setModel(m_proxy);
+        ui.treeView->sortByColumn(0, Qt::AscendingOrder);
     }
 
     if (!transfer->supportsSpeedLimits())
@@ -76,21 +77,21 @@ TransferSettingsDialog::~TransferSettingsDialog()
 
 void TransferSettingsDialog::slotMirrors()
 {
-    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    const QModelIndex index = m_proxy->mapToSource(ui.treeView->selectionModel()->selectedIndexes().first());
     KDialog *mirrors = new MirrorSettings(this, m_transfer, m_model->getUrl(index));
     mirrors->show();
 }
 
 void TransferSettingsDialog::slotRename()
 {
-    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    const QModelIndex index = m_proxy->mapToSource(ui.treeView->selectionModel()->selectedIndexes().first());
     RenameFile *renameDlg = new RenameFile(m_model, index, this);
     renameDlg->show();
 }
 
 void TransferSettingsDialog::slotVerification()
 {
-    QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+    const QModelIndex index = m_proxy->mapToSource(ui.treeView->selectionModel()->selectedIndexes().first());
     KDialog *verification = new VerificationDialog(this, m_transfer, m_model->getUrl(index));
     verification->show();
 }
@@ -101,7 +102,7 @@ void TransferSettingsDialog::slotSelectionChanged()
     //only enable rename when one item is selected and when this item is a file
     if (ui.treeView->selectionModel()->selectedRows().count() == 1)
     {
-        QModelIndex index = ui.treeView->selectionModel()->selectedIndexes().first();
+        const QModelIndex index = m_proxy->mapToSource(ui.treeView->selectionModel()->selectedIndexes().first());
         if (index.isValid() && !(static_cast<FileItem*>(index.internalPointer()))->childCount())
         {
             enabled = true;
