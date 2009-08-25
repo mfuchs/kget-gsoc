@@ -39,20 +39,30 @@ VerificationAddDlg::VerificationAddDlg(VerificationModel *model, QWidget *parent
     setMainWidget(widget);
 
     ui.hashTypes->addItems(Verifier::supportedVerficationTypes());
+    ui.successLabel->hide();
+
+    setButtons(KDialog::Yes | KDialog::User1 | KDialog::Cancel);
+    setButtonGuiItem(KDialog::Yes, KStandardGuiItem::add());
+    setButtonGuiItem(KDialog::User1, KGuiItem(i18nc("Adds the item and reopens the dialog to add a further item", "Add more"), KIcon("list-add")));
+    showButton(KDialog::Yes, true);
+    showButton(KDialog::User1, true);
 
     updateButton();
 
     connect(ui.newHash, SIGNAL(userTextChanged(const QString &)), this, SLOT(updateButton()));
     connect(ui.hashTypes, SIGNAL(currentIndexChanged(int)), this, SLOT(updateButton()));
-    connect(this, SIGNAL(accepted()), this, SLOT(addChecksum()));
+    connect(this, SIGNAL(yesClicked()), this, SLOT(addChecksum()));
+    connect(this, SIGNAL(user1Clicked()), this, SLOT(addMore()));
 }
 
 void VerificationAddDlg::updateButton()
 {
     const QString type = ui.hashTypes->currentText();
     const QString hash = ui.newHash->text();
+    const bool enabled = Verifier::isChecksum(type, hash);
 
-    enableButtonOk(Verifier::isChecksum(type, hash));
+    enableButton(KDialog::Yes, enabled);
+    enableButton(KDialog::User1, enabled);
 }
 
 void VerificationAddDlg::addChecksum()
@@ -61,6 +71,15 @@ void VerificationAddDlg::addChecksum()
     {
         m_model->addChecksum(ui.hashTypes->currentText(), ui.newHash->text());
     }
+}
+
+void VerificationAddDlg::addMore()
+{
+    addChecksum();
+    ui.successLabel->setText(i18n("%1 %2 has been successfully added.", ui.hashTypes->currentText(), ui.newHash->text()));
+    ui.newHash->clear();
+    ui.successLabel->show();
+    ui.hashTypes->setFocus();
 }
 
 VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfer, const KUrl &file)
