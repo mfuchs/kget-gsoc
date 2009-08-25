@@ -132,7 +132,7 @@ void MirrorDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, co
             QSpinBox *numConnections = static_cast<QSpinBox*>(editor);
             model->setData(index, numConnections->value());
         }
-        else if (index.column() == MirrorItem::Connections)
+        else if (index.column() == MirrorItem::Preference)
         {
             QSpinBox *preference = static_cast<QSpinBox*>(editor);
             model->setData(index, preference->value());
@@ -439,17 +439,7 @@ bool MirrorModel::removeRows(int row, int count, const QModelIndex &parent)
     return true;
 }
 
-void MirrorModel::addMirror(const KUrl& url, int numConnecitons)
-{
-    addMirror(url, numConnecitons, 0, QString());
-}
-
-void MirrorModel::addMirror(const KUrl &url, int preference, const QString &countryCode)
-{
-    addMirror(url, 0, preference, countryCode);
-}
-
-void MirrorModel::addMirror(const KUrl &url, int numConnecitons, int preference, const QString &countryCode)
+void MirrorModel::addMirror(const KUrl &url, int numConnections, int preference, const QString &countryCode)
 {
     if (!url.isValid())
     {
@@ -473,7 +463,7 @@ void MirrorModel::addMirror(const KUrl &url, int numConnecitons, int preference,
     m_data.append(item);
     item->setData(MirrorItem::Used, Qt::Checked, Qt::CheckStateRole);//every newly added mirror is set to checked automatically
     item->setData(MirrorItem::Url, QVariant(url));
-    item->setData(MirrorItem::Connections, numConnecitons);
+    item->setData(MirrorItem::Connections, numConnections);
     item->setData(MirrorItem::Preference, preference);
     item->setData(MirrorItem::Country, countryCode);
 

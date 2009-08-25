@@ -89,13 +89,9 @@ class MirrorModel : public QAbstractTableModel
         bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
         bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
 
-        void addMirror(const KUrl &url, int preference, const QString &countryCode);
-        void addMirror(const KUrl &url, int numConnecitons);
+        void addMirror(const KUrl &url, int numConnections = 0, int preference = 0, const QString &countryCode = QString());
         void setMirrors(const QHash<KUrl, QPair<bool, int> > &mirrors);
         QHash<KUrl, QPair<bool, int> > availableMirrors() const;
-
-    private:
-        void addMirror(const KUrl &url, int numConnecitons, int preference, const QString &countryCode);
 
     private:
         QList<MirrorItem*> m_data;

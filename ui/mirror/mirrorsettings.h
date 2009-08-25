@@ -20,13 +20,15 @@
 #ifndef MIRRORSETTINGS_H
 #define MIRRORSETTINGS_H
 
+#include "mirrormodel.h"
+
 #include <KDialog>
 
 #include "ui_mirrorsettings.h"
 #include "ui_mirroradddlg.h"
 
+class QSortFilterProxyModel;
 class TransferHandler;
-class MirrorModel;
 
 class MirrorAddDlg : public KDialog
 {
@@ -34,14 +36,33 @@ class MirrorAddDlg : public KDialog
 
     public:
         MirrorAddDlg(MirrorModel *model, QWidget *parent = 0, Qt::WFlags flags = 0);
+        MirrorAddDlg(MirrorModel *model, QSortFilterProxyModel *countryModel, QWidget *parent = 0, Qt::WFlags flags = 0);
+
+        /**
+         * Shows or hides elements, by default all (expect MirrorItem::Used) are shown
+         * @param type the type whose visiblity should be modified
+         * @param show if type should be shown or not
+         * @note MirrorItem::Used and MirrorItem::Url can not be modified
+         */
+        void showItem(MirrorItem::DataType type, bool show);
 
     private slots:
         void addMirror();
+
+        /**
+         * Adds a mirror and prepares the dialog to add more items
+         */
+        void addMore();
+
         void updateButton(const QString &text = QString());
+
+    private:
+        void init();
 
     private:
         Ui::MirrorAddDlg ui;
         MirrorModel *m_model;
+        QSortFilterProxyModel *m_countryModel;
 };
 
 class MirrorSettings : public KDialog
