@@ -20,47 +20,7 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
-    <widget class="KLineEdit" name="url">
-     <property name="clickMessage">
-      <string>Enter an url</string>
-     </property>
-     <property name="showClearButton" stdset="0">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout_4">
-     <item>
-      <widget class="KIntNumInput" name="preference">
-       <property name="toolTip">
-        <string>Optional: The preference of the mirror, 1 lowest 100 highest.</string>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="minimum">
-        <number>0</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="specialValueText">
-        <string>not specified</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="KComboBox" name="location">
-       <property name="sizeAdjustPolicy">
-        <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="2" column="0">
+   <item row="0" column="0" rowspan="3">
     <widget class="QTreeView" name="used_mirrors">
      <property name="rootIsDecorated">
       <bool>false</bool>
@@ -70,47 +30,28 @@
      </property>
     </widget>
    </item>
+   <item row="0" column="1">
+    <widget class="KPushButton" name="add_mirror"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="KPushButton" name="remove_mirror"/>
+   </item>
    <item row="2" column="1">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <widget class="KPushButton" name="add_mirror"/>
-     </item>
-     <item>
-      <widget class="KPushButton" name="remove_mirror"/>
-     </item>
-     <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>442</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>KComboBox</class>
-   <extends>QComboBox</extends>
-   <header>kcombobox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KIntNumInput</class>
-   <extends>QWidget</extends>
-   <header>knuminput.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
   <customwidget>
    <class>KPushButton</class>
    <extends>QPushButton</extends>

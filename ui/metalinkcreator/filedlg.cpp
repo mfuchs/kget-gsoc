@@ -20,6 +20,7 @@
 #include "filedlg.h"
 #include "metalinker.h"
 #include "urlwidget.h"
+#include "../verificationdialog.h"
 
 #include "../../core/verifier.h"
 
@@ -73,12 +74,6 @@ FileDlg::FileDlg(KGetMetalink::File *file, const QStringList &currentFileNames, 
 
 
     //create the verification stuff
-    ui.hash_types->addItems(Verifier::supportedVerficationTypes());
-    ui.add_hash->setGuiItem(KStandardGuiItem::add());
-    ui.add_hash->setEnabled(false);
-    ui.remove_hash->setGuiItem(KStandardGuiItem::remove());
-    ui.remove_hash->setEnabled(false);
-
     m_verificationModel = new VerificationModel(this);
     QHash<QString, QString>::const_iterator it;
     QHash<QString, QString>::const_iterator itEnd = m_file->verification.hashes.constEnd();
@@ -86,12 +81,13 @@ FileDlg::FileDlg(KGetMetalink::File *file, const QStringList &currentFileNames, 
     {
         m_verificationModel->addChecksum(it.key(), it.value());
     }
+    ui.add_hash->setGuiItem(KStandardGuiItem::add());
+    ui.remove_hash->setGuiItem(KStandardGuiItem::remove());
     ui.used_hashes->setModel(m_verificationModel);
+    slotUpdateVerificationButtons();
 
     connect(m_verificationModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(slotUpdateVerificationButtons()));
     connect(ui.used_hashes, SIGNAL(clicked(const QModelIndex&)), this, SLOT(slotUpdateVerificationButtons()));
-    connect(ui.new_hash, SIGNAL(userTextChanged(const QString &)), this, SLOT(slotUpdateVerificationButtons()));
-    connect(ui.hash_types, SIGNAL(currentIndexChanged(int)), this, SLOT(slotUpdateVerificationButtons()));
     connect(ui.add_hash, SIGNAL(pressed()), this, SLOT(slotAddHash()));
     connect(ui.remove_hash, SIGNAL(pressed()), this, SLOT(slotRemoveHash()));
 
@@ -154,24 +150,6 @@ void FileDlg::slotUpdateOkButton()
 
 void FileDlg::slotUpdateVerificationButtons()
 {
-    const QString type = ui.hash_types->currentText();
-    const QString hash = ui.new_hash->text();
-    bool enableAdd = !hash.isEmpty() && !type.isEmpty();
-    if (enableAdd)
-    {
-        if (!m_diggestLength.contains(type))
-        {
-            m_diggestLength[type] = Verifier::diggestLength(type);
-        }
-
-        enableAdd = enableAdd && (hash.length() == m_diggestLength[type]);
-        if (enableAdd)
-        {
-            enableAdd = Verifier::isChecksum(type, hash);
-        }
-    }
-
-    ui.add_hash->setEnabled(enableAdd);
     ui.remove_hash->setEnabled(ui.used_hashes->selectionModel()->selectedIndexes().count());
 }
 
@@ -187,7 +165,8 @@ void FileDlg::slotRemoveHash()
 
 void FileDlg::slotAddHash()
 {
-    m_verificationModel->addChecksum(ui.hash_types->currentText(), ui.new_hash->text());
+    VerificationAddDlg *dialog = new VerificationAddDlg(m_verificationModel, this);
+    dialog->show();
 }
 
 void FileDlg::slotOkClicked()
@@ -231,6 +210,5 @@ void FileDlg::slotOkClicked()
         emit addFile();
     }
 }
-
 
 #include "filedlg.moc"

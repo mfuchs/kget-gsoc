@@ -20,6 +20,8 @@
 #ifndef URLWIDGET_H
 #define URLWIDGET_H
 
+#include <QtCore/QPointer>
+
 #include "ui_urlwidget.h"
 
 namespace KGetMetalink
@@ -51,14 +53,14 @@ class UrlWidget : public QObject
 
     private slots:
         void slotUrlClicked();
-        void slotUrlChanged(const QString &text);
         void slotAddMirror();
         void slotRemoveMirror();
 
     private:
         KGetMetalink::Resources *m_resources;
         MirrorModel *m_mirrorModel;
-        QWidget *m_widget;
+        QSortFilterProxyModel *m_countrySort;
+        QPointer<QWidget> m_widget;
         Ui::UrlWidget ui;
 };
 
