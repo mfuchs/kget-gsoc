@@ -110,7 +110,7 @@ bool Segment::stopTransfer()
 
 void Segment::slotResult( KJob *job )
 {
-    kDebug(5001) << "job: " << job;
+    kDebug(5001) << "Job:" << job;
 
     m_getJob = 0;
 
@@ -142,12 +142,13 @@ void Segment::slotResult( KJob *job )
         if (m_restarted <= 3)
         {
             const int seconds = 2 * m_restarted;
-            kDebug(5001) << "Conection broken " << job << " --restarting in " << seconds << " seconds for the " << m_restarted << " time--";
+            kDebug(5001) << "Conection broken" << job << "--restarting in" << seconds << "seconds for the" << m_restarted << "time--";
             QTimer::singleShot(seconds * 1000, this, SLOT(startTransfer()));
             setStatus(Timeout);
         }
         else
         {
+            kDebug(5001) << "Segment" << m_segmentNum << "broken, using" << m_url;
             setStatus(Timeout);
             emit brokenSegment(this, m_segmentNum);
         }
@@ -156,7 +157,6 @@ void Segment::slotResult( KJob *job )
 
 void Segment::slotData(KIO::Job *, const QByteArray& _data)
 {
-    kDebug(5001) << "Segment::slotData()";
     // Check if the transfer allow resuming...
     if ( m_offset && !m_canResume)
     {
@@ -187,7 +187,7 @@ void Segment::slotData(KIO::Job *, const QByteArray& _data)
 
 bool Segment::writeBuffer()
 {
-    kDebug(5001) << "Segment::writeBuffer() sending: " << m_buffer.size() << " from job: "<< m_getJob;
+    kDebug(5001) << "Segment::writeBuffer() sending:" << m_buffer.size() << "from job:" << m_getJob;
     if ( m_buffer.isEmpty() )
     {
         return false;
@@ -202,13 +202,16 @@ bool Segment::writeBuffer()
         m_offset += m_buffer.size();
         m_bytesWritten += m_buffer.size();
         m_buffer.clear();
-        kDebug(5001) << "Segment::writeBuffer() updating segment record of job: " << m_getJob << " -- " << m_bytes <<" bytes left";
+        kDebug(5001) << "Segment::writeBuffer() updating segment record of job:" << m_getJob << "--" << m_bytes << "bytes left";
     }
     if (!m_bytes)
     {
         kDebug(5001) << "Closing transfer ...";
-        if ( m_getJob )
-            m_getJob->kill( KJob::EmitResult );
+        if (m_getJob)
+        {
+            m_getJob->kill(KJob::Quietly);
+            m_getJob = 0;
+        }
         emit finishedSegment(this, m_segmentNum);
     }
     return worked;

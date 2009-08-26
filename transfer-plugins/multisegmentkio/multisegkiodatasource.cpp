@@ -79,6 +79,7 @@ void MultiSegKioDataSource::addSegment(const KIO::fileoffset_t offset, const KIO
 
     connect(segment, SIGNAL(data(KIO::fileoffset_t,QByteArray,bool&)), this, SIGNAL(data(KIO::fileoffset_t,QByteArray,bool&)));
     connect(segment, SIGNAL(finishedSegment(Segment*, int)), this, SLOT(slotFinishedSegment(Segment*, int)));
+    connect(segment, SIGNAL(brokenSegment(Segment*,int)), this, SLOT(slotBrokenSegment(Segment*,int)));
 
     if (m_started)
     {

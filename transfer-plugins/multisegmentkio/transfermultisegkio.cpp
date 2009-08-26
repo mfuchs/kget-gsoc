@@ -205,12 +205,11 @@ void TransferMultiSegKio::slotStatus(Job::Status status)
         m_fileModel->setData(statusIndex, status);
     }
 
-    if ((status == Job::Finished) && verifier()->isVerifyable())
+    if ((status == Job::Finished) && (verifier()->status() == Verifier::NotVerified))
     {
-        if (!verifier()->verify() &&
-            (KMessageBox::warningYesNo(0,
-                                       i18n("The download could not be verfied. Do you want to repair it?"),
-                                       i18n("Verification failed.")) == KMessageBox::Yes))
+        if (KMessageBox::warningYesNo(0,
+                                      i18n("The download could not be verfied. Do you want to repair it?"),
+                                      i18n("Verification failed.")) == KMessageBox::Yes)
         {
             repair();
         }
