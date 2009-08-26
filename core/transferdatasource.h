@@ -77,7 +77,7 @@ class KGET_EXPORT TransferDataSource : public QObject
          * @param data the downloaded data
          * @param worked if the receiver could handle the data, if not, the sender should cache the data
          */
-        void data(const KIO::fileoffset_t &offset, const QByteArray &data, bool &worked);
+        void data(KIO::fileoffset_t offset, const QByteArray &data, bool &worked);
 
         /**
          * Returns data in the forms of URL List
@@ -105,10 +105,10 @@ class KGET_EXPORT TransferDataSource : public QObject
          */
         void finishedSegment(TransferDataSource *source, int segmentNumber);
 
-	/**
-	Alert that datasource is no able to send any data
-        @param source the datasource, sending the signal
-	*/
+        /**
+         * Alert that datasource is no able to send any data
+         *@param source the datasource, sending the signal
+         */
         void broken(TransferDataSource *source, Error error);
 
         /**
@@ -119,9 +119,9 @@ class KGET_EXPORT TransferDataSource : public QObject
         void brokenSegment(TransferDataSource *source, int segmentNumber);
 
         /**
-        * The speed of the download
-        * @param speed speed of the download
-        */
+         * The speed of the download
+         * @param speed speed of the download
+         */
         void speed(ulong speed);
 
     private Q_SLOTS:
