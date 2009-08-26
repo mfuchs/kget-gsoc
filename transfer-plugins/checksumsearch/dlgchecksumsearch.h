@@ -113,7 +113,6 @@ class DlgChecksumSettingsWidget : public KCModule
          */
         void slotUpdate();
 
-    private slots:
         /**
          * Adds a new item defining how to proceed a search for checksums to the model
          * @param change the string that should change the source url by mode
