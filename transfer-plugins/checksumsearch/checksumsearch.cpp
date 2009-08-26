@@ -27,7 +27,7 @@
 #include <KDebug>
 #include <KLocale>
 
-const QStringList ChecksumSearch::m_urlChangeModes = (QStringList() << i18n("Append") << i18n("Replace file") << i18n("Replace file-ending"));
+const QStringList ChecksumSearch::URLCHANGEMODES = (QStringList() << i18n("Append") << i18n("Replace file") << i18n("Replace file-ending"));
 
 ChecksumSearch::ChecksumSearch(KUrl src, QString fileName, QString type)
   : m_copyJob(0),
@@ -70,7 +70,7 @@ void ChecksumSearch::slotResult(KJob * job)
 
     if (m_copyJob->isErrorPage())
     {
-        kDebug(5001) << "The requested url does not exist: " << m_src.pathOrUrl();
+        kDebug(5001) << "The requested url does not exist:" << m_src.pathOrUrl();
         m_copyJob = 0;
         emit finished(m_src);
         return;
@@ -80,12 +80,12 @@ void ChecksumSearch::slotResult(KJob * job)
     {
         case 0://The download has finished
         {
-            kDebug(5001) << "Correctly downloaded " << m_src.pathOrUrl();
+            kDebug(5001) << "Correctly downloaded" << m_src.pathOrUrl();
             break;
         }
 
         default:
-            kDebug(5001) << "There was error " << job->error() << " while downloading " << m_src.pathOrUrl();
+            kDebug(5001) << "There was error" << job->error() << "while downloading" << m_src.pathOrUrl();
             break;
     }
 
@@ -129,7 +129,7 @@ void ChecksumSearch::parseDownload()
     if (hash.isEmpty() && (rxChecksum.indexIn(m_data) > -1))
     {
         QString hash = rxChecksum.cap(0);
-        kDebug(5001) << "Found hash: " << hash;
+        kDebug(5001) << "Found hash:" << hash;
         emit data(m_type, hash);
     }
 

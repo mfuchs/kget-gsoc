@@ -47,7 +47,7 @@ class ChecksumSearch : public QObject
         /**
          * Returns the available mode-names. The order of the Stringlist is the same as in the enum
          */
-        static QStringList urlChangeModes() {return m_urlChangeModes;}
+        static QStringList urlChangeModes() {return URLCHANGEMODES;}
 
         /**
          * Returns a modified url according to the paramaters
@@ -84,7 +84,7 @@ class ChecksumSearch : public QObject
         QByteArray m_dataBA;
         QString m_data;
         bool m_isEmpty;
-        static const QStringList m_urlChangeModes;
+        static const QStringList URLCHANGEMODES;
 };
 
 #endif
