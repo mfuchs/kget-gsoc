@@ -38,7 +38,7 @@
 class QFile;
 class QStandardItemModel;
 class TransferHandler;
-//TODO create a delegate!!! and also check when setting the data if it is correct
+
 class KGET_EXPORT VerificationDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
@@ -251,6 +251,11 @@ class KGET_EXPORT Verifier
         mutable VerificationStatus m_status;
 
         QHash<QString, PartialChecksums*> m_partialSums;
+
+        static const QStringList SUPPORTED;
+        static const int DIGGESTLENGTH[];
+        static const int MD5LENGTH;
+        static const int PARTSIZE;
 };
 
 #endif //VERIFIER_H

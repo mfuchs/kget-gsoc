@@ -27,21 +27,23 @@
 #include <KLocale>
 #include <KLineEdit>
 
-static const QStringList s_supported = (QStringList() << "sha512" << "sha384" << "sha256" << "ripmed160" << "sha1" << "md5" << "md4");
-static const int s_digestLength[] = {128, 96, 64, 40, 40, 32, 32};
-static const int s_md5Length = 32;
+const QStringList Verifier::SUPPORTED = (QStringList() << "sha512" << "sha384" << "sha256" << "ripmed160" << "sha1" << "md5" << "md4");
+const int Verifier::DIGGESTLENGTH[] = {128, 96, 64, 40, 40, 32, 32};
+const int Verifier::MD5LENGTH = 32;
+const int Verifier::PARTSIZE = 512 * 1024;
+
 #ifdef HAVE_QCA2
 static QCA::Initializer s_qcaInit;
 #endif //HAVE_QCA2
 
 static const QString s_md5 = QString("md5");
-static const int s_partSize = 512 * 1024;
 
 
 VerificationDelegate::VerificationDelegate(QObject *parent)
   : QStyledItemDelegate(parent),
     m_hashTypes(Verifier::supportedVerficationTypes())
 {
+    m_hashTypes.sort();
 }
 
 QWidget *VerificationDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -116,7 +118,10 @@ void VerificationDelegate::updateEditorGeometry(QWidget *editor, const QStyleOpt
 QSize VerificationDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     //make the sizeHint a little bit nicer to have more beautiful editors
-    return QStyledItemDelegate::sizeHint(option, index) + QSize(0, 7);
+    QSize hint;
+    hint.setWidth(QStyledItemDelegate::sizeHint(option, index).width());
+    hint.setHeight(option.fontMetrics.height() + 7);
+    return hint;
 }
 
 
@@ -174,7 +179,7 @@ bool VerificationModel::setData(const QModelIndex &index, const QVariant &value,
     if ((index.row() == VerificationModel::Type) && role == Qt::EditRole)
     {
         const QString type = value.toString();
-        if (Verifier::supportedVerficationTypes().contains(type))
+        if (Verifier::supportedVerficationTypes().contains(type) && !m_types.contains(type))
         {
             m_types[index.row()] = type;
             return true;
@@ -255,13 +260,13 @@ void VerificationModel::addChecksum(const QString &type, const QString &checksum
         bool works = false;
 
 #ifdef HAVE_QCA2
-        if (QCA::isSupported(type.toLatin1()) && (s_digestLength[s_supported.indexOf(type)] == checksum.size()))
+        if (QCA::isSupported(type.toLatin1()) && Verifier::isChecksum(type, checksum))
         {
             works = true;
         }
 #endif //HAVE_QCA2
 
-        if ((type == s_md5) && (checksum.size() == s_md5Length))
+        if ((type == s_md5) && Verifier::isChecksum(type, checksum))
         {
             works = true;
         }
@@ -325,11 +330,11 @@ QStringList Verifier::supportedVerficationTypes()
     QStringList supported;
 #ifdef HAVE_QCA2
     QStringList supportedTypes = QCA::Hash::supportedTypes();
-    foreach (const QString &type, s_supported)
+    for (int i = 0; i < SUPPORTED.count(); ++i)
     {
-        if (supportedTypes.contains(type))
+        if (supportedTypes.contains(SUPPORTED.at(i)))
         {
-            supported << type;
+            supported << SUPPORTED.at(i);
         }
     }
 #endif //HAVE_QCA2
@@ -339,7 +344,6 @@ QStringList Verifier::supportedVerficationTypes()
         supported << s_md5;
     }
 
-    supported.sort();
     return supported;
 
 }
@@ -349,13 +353,13 @@ int Verifier::diggestLength(const QString &type)
 #ifdef HAVE_QCA2
     if (QCA::isSupported(type.toLatin1()))
     {
-        return s_digestLength[s_supported.indexOf(type)];
+        return DIGGESTLENGTH[SUPPORTED.indexOf(type)];
     }
 #endif //HAVE_QCA2
 
     if (type == s_md5)
     {
-        return s_md5Length;
+        return MD5LENGTH;
     }
 
     return 0;
@@ -411,16 +415,15 @@ bool Verifier::verify() const
         }
 
 #ifdef HAVE_QCA2
-        QStringList::const_iterator it = s_supported.constBegin();
-        QStringList::const_iterator itEnd = s_supported.constEnd();
-        for (; it != itEnd; ++it)
+        const QStringList supported = supportedVerficationTypes();
+        for (int i = 0; i < supported.count(); ++i)
         {
-            QModelIndexList indexList = m_model->match(index, Qt::DisplayRole, *it);
+            QModelIndexList indexList = m_model->match(index, Qt::DisplayRole, supported.at(i));
             //choose the "best" verification type, if it is supported by QCA
             if (!indexList.isEmpty())
             {
                 QModelIndex match = m_model->index(indexList.first().row(), VerificationModel::Checksum);
-                QCA::Hash hash(*it);
+                QCA::Hash hash(supported.at(i));
                 hash.update(&file);
                 QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
                 file.close();
@@ -504,12 +507,13 @@ QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
         }
 
         QString type;
+        const QStringList supported = supportedVerficationTypes();
 #ifdef HAVE_QCA2
-        for (int i = 0; i < s_supported.size(); ++i)
+        for (int i = 0; i < supported.size(); ++i)
         {
-            if (m_partialSums.contains(s_supported.at(i)))
+            if (m_partialSums.contains(supported.at(i)))
             {
-                type = s_supported.at(i);
+                type = supported.at(i);
             }
         }
 #else //NO QCA2
@@ -603,7 +607,7 @@ PartialChecksums Verifier::partialChecksums(const KUrl &dest, const QString &typ
         return PartialChecksums();
     }
 
-    int numPieces = fileSize / s_partSize;
+    int numPieces = fileSize / PARTSIZE;
     KIO::fileoffset_t length = fileSize;
     if (numPieces > 100)
     {
@@ -612,7 +616,7 @@ PartialChecksums Verifier::partialChecksums(const KUrl &dest, const QString &typ
     }
     else if (numPieces)
     {
-        length = s_partSize;
+        length = PARTSIZE;
     }
 
     //there is a rest, so increase numPieces by one
@@ -669,8 +673,8 @@ QString Verifier::calculatePartialChecksum(QFile *file, const QString &type, KIO
 #endif //HAVE_QCA2
 
     //we only read 512kb each time, to save RAM
-    int numData = pieceLength / s_partSize;
-    KIO::fileoffset_t dataRest = pieceLength % s_partSize;
+    int numData = pieceLength / PARTSIZE;
+    KIO::fileoffset_t dataRest = pieceLength % PARTSIZE;
 
     if (!numData && !dataRest)
     {
@@ -680,19 +684,19 @@ QString Verifier::calculatePartialChecksum(QFile *file, const QString &type, KIO
     int k = 0;
     for (k = 0; k < numData; ++k)
     {
-        if (!file->seek(startOffset + s_partSize * k))
+        if (!file->seek(startOffset + PARTSIZE * k))
         {
             return QString();
         }
 
-        QByteArray data = file->read(s_partSize);
+        QByteArray data = file->read(PARTSIZE);
         hash.update(data);
     }
 
     //now read the rest
     if (dataRest)
     {
-        if (!file->seek(startOffset + s_partSize * k))
+        if (!file->seek(startOffset + PARTSIZE * k))
         {
             return QString();
         }
@@ -719,8 +723,8 @@ void Verifier::addPartialChecksums(const QString &type, KIO::filesize_t length, 
 KIO::filesize_t Verifier::partialChunkLength() const
 {
     QStringList::const_iterator it;
-    QStringList::const_iterator itEnd = s_supported.constEnd();
-    for (it = s_supported.constBegin(); it != itEnd; ++it)
+    QStringList::const_iterator itEnd = SUPPORTED.constEnd();
+    for (it = SUPPORTED.constBegin(); it != itEnd; ++it)
     {
         if (m_partialSums.contains(*it))
         {
