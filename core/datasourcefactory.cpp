@@ -31,7 +31,7 @@
 
 #include <kde_file.h>
 
-const int SPEEDTIMER = 2000;//2 seconds...
+const int SPEEDTIMER = 1000;//1 second...
 
 DataSource::DataSource(TransferDataSource *transferDataSource)
   : m_dataSource(transferDataSource),
@@ -49,8 +49,8 @@ DataSource::~DataSource()
 }
 
 //TODO //FIXME the downloads are slow, fix them somehow
-DataSourceFactory::DataSourceFactory(const KUrl &dest, const KIO::filesize_t &size,
-                                     const KIO::fileoffset_t &segSize, QObject *parent)
+DataSourceFactory::DataSourceFactory(const KUrl &dest, KIO::filesize_t size, KIO::fileoffset_t segSize,
+                                     QObject *parent)
   : QObject(parent),
     m_dest(dest),
     m_size(size),
@@ -416,6 +416,14 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
                 {
                     kDebug(5001) << "Successfully created a TransferDataSource for " << url.pathOrUrl();
 
+                    //url might have been an unused Mirror, so remove it in any case
+                    const int index = m_unusedUrls.indexOf(url);
+                    if (index > -1 )
+                    {
+                        m_unusedUrls.removeAt(index);
+                        m_unusedConnections.removeAt(index);
+                    }
+
                     m_sources[url] = new DataSource(source);
                     m_sources[url]->setParalellSegments(numParalellConnections);
 
@@ -445,7 +453,8 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
             }
             else
             {
-                m_unusedMirrors[url] = numParalellConnections;
+                m_unusedUrls.append(url);
+                m_unusedConnections.append(numParalellConnections);
             }
         }
     }
@@ -457,7 +466,8 @@ void DataSourceFactory::addMirror(const KUrl &url, bool used, int numParalellCon
         }
         else
         {
-            m_unusedMirrors[url] = numParalellConnections;
+            m_unusedUrls.append(url);
+            m_unusedConnections.append(numParalellConnections);
         }
     }
 }
@@ -470,7 +480,8 @@ void DataSourceFactory::removeMirror(const KUrl &url)
         DataSource *source = m_sources[url];
         source->transferDataSource()->stop();
         m_sources.remove(url);
-        m_unusedMirrors[url] = source->paralellSegments();
+        m_unusedUrls.append(url);
+        m_unusedConnections.append(source->paralellSegments());
         delete source;
 
         QHash<int, KUrl>::iterator it;
@@ -479,12 +490,46 @@ void DataSourceFactory::removeMirror(const KUrl &url)
         {
             if (*it == url)
             {
+                kDebug(5001) << "Segment" << it.key() << "not assigned anymore.";
                 m_startedChunks->set(it.key(), false);
                 it = m_assignedChunks.erase(it);
             }
             else
             {
                 ++it;
+            }
+        }
+    }
+
+    //see if mirrors need to be assigned, e.g. the broken segment was the last one
+    if (m_status == Job::Running)
+    {
+        bool assignNeeded = true;
+        QHash<KUrl, DataSource*>::const_iterator it;
+        QHash<KUrl, DataSource*>::const_iterator itEnd = m_sources.constEnd();
+        for (it = m_sources.constBegin(); it != itEnd; ++it)
+        {
+            if ((*it)->currentSegments())
+            {
+                //at least one TransferDataSource is still running, so no assign needed
+                assignNeeded = false;
+                break;
+            }
+        }
+
+        if (assignNeeded)
+        {
+            if (m_sources.count())
+            {
+                kDebug(5001) << "Assigning a TransferDataSource.";
+                //simply assign a TransferDataSource
+                assignSegment((*m_sources.begin())->transferDataSource());
+            }
+            else if (m_unusedUrls.count())
+            {
+                kDebug(5001) << "Assigning an unused mirror";
+                //takes the first unused mirror
+                addMirror(m_unusedUrls.takeFirst(), true, m_unusedConnections.takeFirst());
             }
         }
     }
@@ -504,7 +549,8 @@ void DataSourceFactory::setMirrors(const QHash<KUrl, QPair<bool, int> > &mirrors
     }
 
     //remove all unused Mirrors and simply readd them below
-    m_unusedMirrors.clear();
+    m_unusedUrls.clear();
+    m_unusedConnections.clear();
 
     //second modify the existing DataSources and add the new ones
     QHash<KUrl, QPair<bool, int> >::const_iterator it;
@@ -529,11 +575,9 @@ QHash<KUrl, QPair<bool, int> > DataSourceFactory::mirrors() const
     }
 
     {
-        QHash<KUrl, int>::const_iterator it;
-        QHash<KUrl, int>::const_iterator itEnd = m_unusedMirrors.constEnd();
-        for (it = m_unusedMirrors.constBegin(); it != itEnd; ++it)
+        for (int i = 0; i < m_unusedUrls.count(); ++i)
         {
-            mirrors[it.key()] = QPair<bool, int>(false, it.value());
+            mirrors[m_unusedUrls[i]] = QPair<bool, int>(false, m_unusedConnections[i]);
         }
     }
 
@@ -542,41 +586,20 @@ QHash<KUrl, QPair<bool, int> > DataSourceFactory::mirrors() const
 
 void DataSourceFactory::brokenSegment(TransferDataSource *source, int segmentNumber)
 {
+    kDebug() << "Segment" << segmentNumber << "broken," << source;
     if (!source || (segmentNumber < 0) || (static_cast<quint32>(segmentNumber) > m_finishedChunks->getNumBits()))
     {
         return;
     }
 
-    QHash<int, KUrl>::const_iterator it;
-    QHash<int, KUrl>::const_iterator itEnd = m_assignedChunks.constEnd();
-    for (it = m_assignedChunks.constBegin(); it != itEnd; ++it)
-    {
-        if (source == m_sources[*it]->transferDataSource())
-        {
-            m_assignedChunks[it.key()] = 0;
-            m_startedChunks->set(it.key(), false);
-        }
-    }
-
     removeMirror(source->sourceUrl());
-
-    //TODO should we keep the datasource as maybe it was only a temporary problem?
 }
 
 
 void DataSourceFactory::broken(TransferDataSource *source, TransferDataSource::Error error)
 {
     const QString url = source->sourceUrl().pathOrUrl();
-    QHash<int, KUrl>::const_iterator it;
-    QHash<int, KUrl>::const_iterator itEnd = m_assignedChunks.constEnd();
-    for (it = m_assignedChunks.constBegin(); it != itEnd; ++it)
-    {
-        if (source == m_sources[*it]->transferDataSource())
-        {
-            m_assignedChunks[it.key()] = 0;
-            m_startedChunks->set(it.key(), false);
-        }
-    }
+
     removeMirror(source->sourceUrl());
 
     if (error == TransferDataSource::WrongDownloadSize)
@@ -612,7 +635,6 @@ void DataSourceFactory::finishedSegment(TransferDataSource *source, int segmentN
 
 void DataSourceFactory::assignSegment(TransferDataSource *source)
 {
-    //TODO: Grep a _random_ chunk
     if (!m_startedChunks || !m_finishedChunks)
     {
         kDebug(5001) << "Assign tried";
@@ -658,7 +680,7 @@ void DataSourceFactory::assignSegment(TransferDataSource *source)
     }
 }
 
-void DataSourceFactory::slotWriteData(const KIO::fileoffset_t &offset, const QByteArray &data, bool &worked)
+void DataSourceFactory::slotWriteData(KIO::fileoffset_t offset, const QByteArray &data, bool &worked)
 {
     worked = !m_blocked && !m_movingFile && m_open;
     if (m_blocked || m_movingFile || !m_open)
@@ -680,7 +702,7 @@ void DataSourceFactory::slotOffset(KIO::Job *job , KIO::filesize_t offset)
     m_putJob->write(m_tempData);
 }
 
-void DataSourceFactory::slotDataWritten(KIO::Job *job, const KIO::filesize_t &written)
+void DataSourceFactory::slotDataWritten(KIO::Job *job, KIO::filesize_t written)
 {
     Q_UNUSED(job)
 
@@ -711,7 +733,7 @@ void DataSourceFactory::slotPercent(KJob* job, ulong p)
 
 void DataSourceFactory::speedChanged()
 {
-    m_speed = (m_downloadedSize - m_prevDownloadedSize) / 2;//downloaded in 2 seconds / 2
+    m_speed = (m_downloadedSize - m_prevDownloadedSize) / (SPEEDTIMER / 1000);//downloaded in 1 second
     m_prevDownloadedSize = m_downloadedSize;
 
     emit speed(m_speed);
@@ -724,7 +746,6 @@ void DataSourceFactory::killPutJob()
     {
         kDebug(5001) << "Closing the file";
         m_open = false;
-        m_putJob->close();
         m_putJob->kill();
         m_putJob = 0;
     }
@@ -792,7 +813,6 @@ void DataSourceFactory::repair()
         return;
     }
 
-    //FIXME crashes sometimes when the user waits too long to call repair (?), maybe because a TransferDataSource is not correctly deleted then, or some signals connect to non-existing (anymore) parts
     m_finished = false;
     QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces = verifier()->brokenPieces();
     if (brokenPieces.isEmpty())
@@ -816,14 +836,14 @@ void DataSourceFactory::repair()
         }
     }
 
-    //remove all current mirrors and readd the "first" mirror
-    QList<KUrl> mirrors = m_sources.keys();
+    //remove all current mirrors and readd the first unused mirror
+    QList<KUrl> mirrors = m_sources.keys();//TODO only remove the mirrors of the broken segments?! --> for that m_assignedChunks would need to be saved was well
+    //TODO maybe store the assigned segments alongside the used mirrors in form of a list --> "1,3,2.."? --> wouldn't that make transfers.kgt very large?//TODO is assigned segments a good idea at all, memory wise?
     foreach (const KUrl &mirror, mirrors)
     {
         removeMirror(mirror);
     }
-    QHash<KUrl, int>::const_iterator mirror = m_unusedMirrors.constBegin();//HACK
-    addMirror(mirror.key(), true, mirror.value());
+    addMirror(m_unusedUrls.takeFirst(), true, m_unusedConnections.takeFirst());
 
     m_downloadedSize = m_segSize * m_finishedChunks->numOnBits();
     changeStatus(Job::Stopped, true);
@@ -1074,14 +1094,12 @@ void DataSourceFactory::save(const QDomElement &element)
     //set the unused urls
     {
         QDomElement urls = doc.createElement("unusedUrls");
-        QHash<KUrl, int>::const_iterator it;
-        QHash<KUrl, int>::const_iterator itEnd = m_unusedMirrors.constEnd();
-        for (it = m_unusedMirrors.constBegin(); it != itEnd; ++it)
+        for (int i = 0; i < m_unusedUrls.count(); ++i)
         {
             QDomElement url = doc.createElement("url");
-            const QDomText text = doc.createTextNode(it.key().url());
+            const QDomText text = doc.createTextNode(m_unusedUrls.at(i).url());
             url.appendChild(text);
-            url.setAttribute("numParalellSegments", it.value());
+            url.setAttribute("numParalellSegments", m_unusedConnections.at(i));
             urls.appendChild(url);
             factory.appendChild(urls);
         }

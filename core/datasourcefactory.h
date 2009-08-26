@@ -85,7 +85,7 @@ class KGET_EXPORT DataSourceFactory : public QObject
          * In general use this constructor, if the size is 0, the datasourcefactory will try to
          * find the filesize
          */
-        DataSourceFactory(const KUrl &dest, const KIO::filesize_t &size, const KIO::fileoffset_t &segSize, QObject *parent);
+        DataSourceFactory(const KUrl &dest, KIO::filesize_t size, KIO::fileoffset_t segSize, QObject *parent);
 
         /**
          * @note us this constructor only if you are loading a DataSourceFactory
@@ -223,9 +223,9 @@ class KGET_EXPORT DataSourceFactory : public QObject
          * A TransferDataSource is broken
          */
         void broken(TransferDataSource *source, TransferDataSource::Error error);
-        void slotWriteData(const KIO::fileoffset_t &offset, const QByteArray &data, bool &worked);
+        void slotWriteData(KIO::fileoffset_t offset, const QByteArray &data, bool &worked);
         void slotOffset(KIO::Job *job, KIO::filesize_t offset);
-        void slotDataWritten(KIO::Job *job, const KIO::filesize_t &offset);
+        void slotDataWritten(KIO::Job *job, KIO::filesize_t offset);
         void slotPercent(KJob *job, ulong percent);
         void open(KIO::Job *job);
         void speedChanged();
@@ -291,7 +291,8 @@ class KGET_EXPORT DataSourceFactory : public QObject
 
         int m_maxMirrorsUsed;
         QHash<KUrl, DataSource*> m_sources;
-        QHash<KUrl, int> m_unusedMirrors;//int = the number of paralell connections
+        QList<KUrl> m_unusedUrls;
+        QList<int> m_unusedConnections;
         QTimer *m_speedTimer;
         KioDownload *m_tempDownload;
         Job::Status m_status;
