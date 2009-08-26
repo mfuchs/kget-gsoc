@@ -28,8 +28,8 @@
 #include "nepomukhandler.h"
 #endif
 
-const QStringList Transfer::m_statusTexts = QStringList() << i18n("Downloading....") << i18nc("transfer state: delayed", "Delayed") << i18nc("transfer state: stopped", "Stopped") << i18nc("transfer state: aborted", "Aborted") << i18nc("transfer state: finished", "Finished") << i18nc("changing the destination of the file", "Changing destination");
-const QStringList Transfer::m_statusIcons = QStringList() << "media-playback-start" << "view-history" << "process-stop" << "dialog-error" << "dialog-ok" << "media-playback-pause";
+const QStringList Transfer::STATUSTEXTS = QStringList() << i18n("Downloading....") << i18nc("transfer state: delayed", "Delayed") << i18nc("transfer state: stopped", "Stopped") << i18nc("transfer state: aborted", "Aborted") << i18nc("transfer state: finished", "Finished") << i18nc("changing the destination of the file", "Changing destination");
+const QStringList Transfer::STATUSICONS = QStringList() << "media-playback-start" << "view-history" << "process-stop" << "dialog-error" << "dialog-ok" << "media-playback-pause";
 
 Transfer::Transfer(TransferGroup * parent, TransferFactory * factory,
                    Scheduler * scheduler, const KUrl & source, const KUrl & dest,
@@ -281,20 +281,16 @@ void Transfer::load(const QDomElement *element)
 
 void Transfer::setStatus(Job::Status jobStatus, const QString &text, const QPixmap &pix)
 {
-    //If a job is finished don't let it to be changed
-    if((status() == Job::Finished) && (jobStatus != Job::Finished))
-        return;
-
     QString statusText = text;
     if (statusText.isEmpty())
     {
-        statusText = m_statusTexts[jobStatus];
+        statusText = STATUSTEXTS[jobStatus];
     }
 
     QPixmap statusIcon = pix;
     if (statusIcon.isNull())
     {
-        statusIcon = SmallIcon(m_statusIcons[jobStatus]);
+        statusIcon = SmallIcon(STATUSICONS[jobStatus]);
     }
 
     m_statusText = statusText;
@@ -339,10 +335,10 @@ void Transfer::setTransferChange(ChangesFlags change, bool postEvent)
 
 QString Transfer::statusText(Job::Status status)
 {
-    return m_statusTexts[status];
+    return STATUSTEXTS[status];
 }
 
 QPixmap Transfer::statusPixmap(Job::Status status)
 {
-    return SmallIcon(m_statusIcons[status]);
+    return SmallIcon(STATUSICONS[status]);
 }
