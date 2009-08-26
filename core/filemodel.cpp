@@ -572,7 +572,7 @@ FileItem *FileModel::getItem(const KUrl &file)
     return item;
 }
 
-bool FileModel::downloadFinished(KUrl &file)
+bool FileModel::downloadFinished(const KUrl &file)
 {
     FileItem *item = getItem(file);
     if (item)

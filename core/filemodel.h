@@ -145,7 +145,7 @@ class KGET_EXPORT FileModel : public QAbstractItemModel
         /**
          * Checks if the download for file has been finished
          */
-        bool downloadFinished(KUrl &file);
+        bool downloadFinished(const KUrl &file);
 
     public slots:
         /**
