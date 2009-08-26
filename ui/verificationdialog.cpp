@@ -38,7 +38,9 @@ VerificationAddDlg::VerificationAddDlg(VerificationModel *model, QWidget *parent
     ui.setupUi(widget);
     setMainWidget(widget);
 
-    ui.hashTypes->addItems(Verifier::supportedVerficationTypes());
+    QStringList supportedTypes = Verifier::supportedVerficationTypes();
+    supportedTypes.sort();
+    ui.hashTypes->addItems(supportedTypes);
     ui.successLabel->hide();
 
     setButtons(KDialog::Yes | KDialog::User1 | KDialog::Cancel);
