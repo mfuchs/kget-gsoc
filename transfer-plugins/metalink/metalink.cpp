@@ -161,6 +161,7 @@ void Metalink::metalinkInit(const KUrl &src, const QByteArray &data)
         connect(dataFactory, SIGNAL(processedSize(KIO::filesize_t)), this, SLOT(processedSizeChanged()));
         connect(dataFactory, SIGNAL(speed(ulong)), this, SLOT(speedChanged()));
         connect(dataFactory, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
+        connect(dataFactory->verifier(), SIGNAL(verified(bool)), this, SLOT(slotVerified(bool)));
 
         //add the DataSources
         for (int i = 0; i < urlList.size(); ++i)
@@ -455,29 +456,6 @@ void Metalink::slotStatus(Job::Status status)
             if (changeStatus)
             {
                 setStatus(Job::Finished);
-
-                //see if some files are NotVerified
-                QStringList brokenFiles;
-                foreach (DataSourceFactory *factory, m_dataSourceFactory)
-                {
-                    if (factory->doDownload() && (factory->verifier()->status() == Verifier::NotVerified))
-                    {
-                        brokenFiles.append(factory->dest().pathOrUrl());
-                    }
-                }
-
-                if (brokenFiles.count())
-                {
-                    if (KMessageBox::warningYesNoCancelList(0,
-                        i18n("The cownload could not be verified, try to repair it?"),
-                        brokenFiles) == KMessageBox::Yes)
-                    {
-                        if (repair())
-                        {
-                            return;
-                        }
-                    }
-                }
             }
             break;
 
@@ -499,6 +477,35 @@ void Metalink::slotStatus(Job::Status status)
     if (changeStatus)
     {
         setTransferChange(flags, true);
+    }
+}
+
+void Metalink::slotVerified(bool isVerified)
+{
+    if (status() == Job::Finished)
+    {
+        //see if some files are NotVerified
+        QStringList brokenFiles;
+        foreach (DataSourceFactory *factory, m_dataSourceFactory)
+        {
+            if (factory->doDownload() && (factory->verifier()->status() == Verifier::NotVerified))
+            {
+                brokenFiles.append(factory->dest().pathOrUrl());
+            }
+        }
+
+        if (brokenFiles.count())
+        {
+            if (KMessageBox::warningYesNoCancelList(0,
+                i18n("The cownload could not be verified, try to repair it?"),
+                     brokenFiles) == KMessageBox::Yes)
+            {
+                if (repair())
+                {
+                    return;
+                }
+            }
+        }
     }
 }
 

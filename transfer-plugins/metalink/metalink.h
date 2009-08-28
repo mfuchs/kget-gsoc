@@ -83,6 +83,7 @@ class Metalink : public QObject, public Transfer
         void speedChanged();
         void slotStatus(Job::Status status);
         void slotRename(const KUrl &oldUrl, const KUrl &newUrl);
+        void slotVerified(bool isVerified);
 
     private :
         void startMetalink();
