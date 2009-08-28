@@ -990,9 +990,7 @@ void DataSourceFactory::changeStatus(Job::Status status, bool loaded)
 
             if (!loaded && verifier()->isVerifyable())
             {
-                kDebug(5001) << "Download verified: " << verifier()->verify();
-                emit statusChanged(m_status);
-                return;
+                verifier()->verifyThreaded();
             }
             break;
         default:
