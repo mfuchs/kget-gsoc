@@ -746,7 +746,7 @@ void DataSourceFactory::killPutJob()
     {
         kDebug(5001) << "Closing the file";
         m_open = false;
-        m_putJob->kill();
+        m_putJob->close();
         m_putJob = 0;
     }
 }
