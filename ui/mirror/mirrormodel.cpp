@@ -152,7 +152,7 @@ void MirrorDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionVie
     editor->setGeometry(option.rect);
 }
 
-QSize MirrorDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
+QSize MirrorDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     //make the sizeHint a little bit nicer to have more beautiful editors
     QSize hint;
@@ -414,7 +414,7 @@ bool MirrorModel::setData(const QModelIndex &index, const QVariant &value, int r
         return false;
     }
 
-    bool changed = m_data.at(index.row())->setData(index.column(), value, role);
+    const bool changed = m_data.at(index.row())->setData(index.column(), value, role);
     if (changed)
     {
         emit dataChanged(index, index);

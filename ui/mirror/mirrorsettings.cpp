@@ -109,6 +109,10 @@ void MirrorAddDlg::addMirror()
     const int preference = ui.preference->isVisible() ? ui.preference->value() : 0;
     const QString countryCode = ui.location->itemData(ui.location->currentIndex()).toString();
     m_model->addMirror(KUrl(ui.url->text()), numConnections, preference, countryCode);
+    if (m_countryModel)
+    {
+        ui.location->setCurrentIndex(-1);
+    }
 }
 
 void MirrorAddDlg::addMore()
