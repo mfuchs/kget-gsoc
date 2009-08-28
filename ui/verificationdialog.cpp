@@ -182,12 +182,6 @@ void VerificationDialog::verifyPressed()
                                  i18n("The downloaded file was successfully verified."),
                                  i18n("Verification successful"));
     }
-    else if (KMessageBox::warningYesNo(this,
-             i18n("The downloaded file could not be verified. Do you want to repair it?"),
-             i18n("Verification failed")) == KMessageBox::Yes)
-    {
-        m_transfer->repair(m_file);
-    }
 }
 
 #include "verificationdialog.moc"
