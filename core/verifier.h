@@ -23,9 +23,11 @@
 #include <KIO/Job>
 #include <KUrl>
 
-#include <QtCore/QHash>
-#include <QtCore/QStringList>
 #include <QtCore/QAbstractTableModel>
+#include <QtCore/QHash>
+#include <QtCore/QMutex>
+#include <QtCore/QStringList>
+#include <QtCore/QThread>
 #include <QtGui/QStyledItemDelegate>
 #include <QtXml/QDomElement>
 
@@ -38,6 +40,37 @@
 class QFile;
 class QStandardItemModel;
 class TransferHandler;
+
+class VerificationThread : public QThread
+{
+    Q_OBJECT
+
+    public:
+        VerificationThread(QObject *parent = 0);
+        ~VerificationThread();
+
+        void verifiy(const QString &type, const QString &checksum, const KUrl &file);
+
+    signals:
+        /**
+         * Emitted when the verification of a file finishes, connect to this signal
+         * if you do the verification for one file only and do not want to bother with
+         * file and type
+         */
+        void verified(bool verified);
+
+        void verified(const QString &type, bool verified, const KUrl &file);
+
+    protected:
+        void run();
+
+    private:
+        QMutex mutex;
+        bool abort;
+        QStringList m_types;
+        QStringList m_checksums;
+        QList<KUrl> m_files;
+};
 
 class KGET_EXPORT VerificationDelegate : public QStyledItemDelegate
 {
@@ -127,8 +160,10 @@ class KGET_EXPORT PartialChecksums
         QList<QString> m_checksums;
 };
 
-class KGET_EXPORT Verifier
+class KGET_EXPORT Verifier : public QObject
 {
+    Q_OBJECT
+
     public:
         Verifier(const KUrl &m_dest);
         ~Verifier();
@@ -167,6 +202,18 @@ class KGET_EXPORT Verifier
         static bool isChecksum(const QString &type, const QString &checksum);
 
         /**
+         * Creates the checksum type of the file dest
+         */
+        static QString checksum(const KUrl &dest, const QString &type);
+
+        /**
+         * Create partial checksums of type for file dest
+         * @note the length of the partial checksum is not less than 512 kb
+         * and there won't be more partial checksums than 101
+         */
+        static PartialChecksums partialChecksums(const KUrl &dest, const QString &type);
+
+        /**
          * @note only call verify() when this function returns true
          * @return true if the downloaded file exists and a supported checksum is set
          */
@@ -186,7 +233,7 @@ class KGET_EXPORT Verifier
          * @note only call this function when isVerifiyable() returns true
          * @return true if the transfer could be verified
          */
-        bool verify() const;
+        bool verify();
 
         /**
          * Convenience function if only a row of the model should be checked
@@ -195,7 +242,13 @@ class KGET_EXPORT Verifier
          * @note only call this function when isVerifiyable() returns true
          * @return true if the transfer could be verified
          */
-        bool verify(int row) const;
+        bool verify(int row);
+
+        /**
+         * Call this method if you want to verify() in its own thread, then signals with
+         * the result are emitted
+         */
+        void verifyThreaded();
 
         /**
          * Call this method after calling verify() with a negative result, it will
@@ -204,18 +257,6 @@ class KGET_EXPORT Verifier
          * piece, the last piece might have a larger size than it really is
          */
         QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces() const;
-
-        /**
-         * Creates the checksum type of the file dest
-         */
-        static QString checksum(const KUrl &dest, const QString &type);
-
-        /**
-         * Create partial checksums of type for file dest
-         * @note the length of the partial checksum is not less than 512 kb
-         * and there won't be more partial checksums than 101
-         */
-        static PartialChecksums partialChecksums(const KUrl &dest, const QString &type);
 
         /**
          * Add partial checksums that can be used as repairinformation
@@ -234,6 +275,11 @@ class KGET_EXPORT Verifier
         KIO::filesize_t partialChunkLength() const;
 
         /**
+         * Returns the best stored checksum-type with the checksum
+         */
+        QPair<QString, QString> checksum() const;
+
+        /**
          * @return the model that stores the hash-types and checksums
          */
         VerificationModel *model();
@@ -241,16 +287,27 @@ class KGET_EXPORT Verifier
         void save(const QDomElement &element);
         void load(const QDomElement &e);
 
+    signals:
+        /**
+         * Emitted when the verification of a file finishes
+         * @NOTE only the threaded method emits this signal
+         */
+        void verified(bool verified);
+
+    private slots:
+        void changeStatus(bool verified);
+
     private:
-        void changeStatus(bool verified) const;
         static QString calculatePartialChecksum(QFile *file, const QString &type, KIO::fileoffset_t startOffset, int pieceLength, KIO::filesize_t fileSize = 0);
 
     private:
         VerificationModel *m_model;
         KUrl m_dest;
-        mutable VerificationStatus m_status;
+        VerificationStatus m_status;
 
         QHash<QString, PartialChecksums*> m_partialSums;
+
+        VerificationThread m_thread;
 
         static const QStringList SUPPORTED;
         static const int DIGGESTLENGTH[];

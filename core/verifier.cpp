@@ -24,6 +24,7 @@
 
 #include <KCodecs>
 #include <KComboBox>
+#include <KDebug>
 #include <KLocale>
 #include <KLineEdit>
 
@@ -38,6 +39,67 @@ static QCA::Initializer s_qcaInit;
 
 static const QString s_md5 = QString("md5");
 
+VerificationThread::VerificationThread(QObject *parent)
+  : QThread(parent),
+    abort(false)
+{
+}
+
+VerificationThread::~VerificationThread()
+{
+    mutex.lock();
+    abort = true;
+    mutex.unlock();
+
+    wait();
+}
+
+void VerificationThread::verifiy(const QString &type, const QString &checksum, const KUrl &file)
+{
+    QMutexLocker locker(&mutex);
+    m_types.append(type);
+    m_checksums.append(checksum);
+    m_files.append(file);
+
+    if (!isRunning())
+    {
+        start();
+    }
+}
+
+void VerificationThread::run()
+{
+    mutex.lock();
+    bool run = m_files.count();
+    mutex.unlock();
+
+    while (run && !abort)
+    {
+        mutex.lock();
+        const QString type = m_types.takeFirst();
+        const QString checksum = m_checksums.takeFirst();
+        const KUrl url = m_files.takeFirst();
+        mutex.unlock();
+
+        if (type.isEmpty() || checksum.isEmpty())
+        {
+            mutex.lock();
+            run = m_files.count();
+            mutex.unlock();
+            continue;
+        }
+
+        const QString hash = Verifier::checksum(url, type);
+        kDebug() << "Type:" << type << "Calculated checksum:" << hash << "Entered checksum:" << checksum;
+        const bool fileVerified = (hash == checksum);
+        emit verified(type, fileVerified, url);
+        emit verified(fileVerified);
+
+        mutex.lock();
+        run = m_files.count();
+        mutex.unlock();
+    }
+}
 
 VerificationDelegate::VerificationDelegate(QObject *parent)
   : QStyledItemDelegate(parent),
@@ -176,23 +238,26 @@ bool VerificationModel::setData(const QModelIndex &index, const QVariant &value,
         return false;
     }
 
-    if ((index.row() == VerificationModel::Type) && role == Qt::EditRole)
+    if ((index.column() == VerificationModel::Type) && role == Qt::EditRole)
     {
         const QString type = value.toString();
         if (Verifier::supportedVerficationTypes().contains(type) && !m_types.contains(type))
         {
             m_types[index.row()] = type;
+            emit dataChanged(index, index);
             return true;
         }
     }
-    else if ((index.row() == VerificationModel::Checksum) && role == Qt::EditRole)
+    else if ((index.column() == VerificationModel::Checksum) && role == Qt::EditRole)
     {
         const QModelIndex typeIndex = index.model()->index(index.row(), VerificationModel::Type);
         const QString type = index.model()->data(typeIndex).toString();
         const QString checksum = value.toString();
         if (Verifier::isChecksum(type, checksum))
         {
+
             m_checksums[index.row()] = checksum;
+            emit dataChanged(index, index);
             return true;
         }
     }
@@ -312,6 +377,7 @@ Verifier::Verifier(const KUrl &dest)
     m_status(NoResult)
 {
     m_model = new VerificationModel();
+    connect(&m_thread, SIGNAL(verified(bool)), this, SLOT(changeStatus(bool)));
 }
 
 Verifier::~Verifier()
@@ -397,7 +463,7 @@ bool Verifier::isVerifyable(int row) const
     return false;
 }
 
-bool Verifier::verify() const
+bool Verifier::verify()
 {
     if (QFile::exists(m_dest.pathOrUrl()))
     {
@@ -407,41 +473,28 @@ bool Verifier::verify() const
             return false;
         }
 
-        //check if there is at least one entry
-        QModelIndex index = m_model->index(0, 0);
-        if (!index.isValid())
+        const QPair<QString, QString> pair = checksum();
+        if (pair.first.isEmpty() || pair.second.isEmpty())
         {
             return false;
         }
 
 #ifdef HAVE_QCA2
-        const QStringList supported = supportedVerficationTypes();
-        for (int i = 0; i < supported.count(); ++i)
-        {
-            QModelIndexList indexList = m_model->match(index, Qt::DisplayRole, supported.at(i));
-            //choose the "best" verification type, if it is supported by QCA
-            if (!indexList.isEmpty())
-            {
-                QModelIndex match = m_model->index(indexList.first().row(), VerificationModel::Checksum);
-                QCA::Hash hash(supported.at(i));
-                hash.update(&file);
-                QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
-                file.close();
-                bool verified = (final == match.data().toString());
-                changeStatus(verified);
-                return verified;
-            }
-        }
+        QCA::Hash hash(pair.first);
+        hash.update(&file);
+        QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
+        file.close();
+        bool verified = (final == pair.second);
+        changeStatus(verified);
+        return verified;
 #endif //HAVE_QCA2
 
         //use md5 provided by KMD5 as a fallback
-        QModelIndexList indexList = m_model->match(index, 0, s_md5);
-        if (!indexList.isEmpty())
+        if (pair.first == s_md5)
         {
-            QModelIndex match = m_model->index(indexList.first().row(), VerificationModel::Checksum);
             KMD5 hash;
             hash.update(file);
-            bool verified = hash.verify(match.data().toString().toLatin1());
+            bool verified = hash.verify(pair.second.toLatin1());
             file.close();
             changeStatus(verified);
             return verified;
@@ -452,7 +505,7 @@ bool Verifier::verify() const
     return false;
 }
 
-bool Verifier::verify(int row) const
+bool Verifier::verify(int row)
 {
     if (QFile::exists(m_dest.pathOrUrl()) && (row >= 0) && (row < m_model->rowCount()))
     {
@@ -489,9 +542,57 @@ bool Verifier::verify(int row) const
     return false;
 }
 
-void Verifier::changeStatus(bool verified) const
+QPair<QString, QString> Verifier::checksum() const
 {
-    m_status = verified ? Verified : NotVerified;
+    QPair<QString, QString> pair;
+
+    //check if there is at least one entry
+    QModelIndex index = m_model->index(0, 0);
+    if (!index.isValid())
+    {
+        return pair;
+    }
+
+#ifdef HAVE_QCA2
+    const QStringList supported = supportedVerficationTypes();
+    for (int i = 0; i < supported.count(); ++i)
+    {
+        QModelIndexList indexList = m_model->match(index, Qt::DisplayRole, supported.at(i));
+        //choose the "best" verification type, if it is supported by QCA
+        if (!indexList.isEmpty())
+        {
+            QModelIndex match = m_model->index(indexList.first().row(), VerificationModel::Checksum);
+            pair.first = supported.at(i);
+            pair.second = match.data().toString();
+            return pair;
+        }
+    }
+#endif //HAVE_QCA2
+
+    //use md5 provided by KMD5 as a fallback
+    QModelIndexList indexList = m_model->match(index, 0, s_md5);
+    if (!indexList.isEmpty())
+    {
+        QModelIndex match = m_model->index(indexList.first().row(), VerificationModel::Checksum);
+        pair.first = s_md5;
+        pair.second = match.data().toString();
+        return pair;
+    }
+
+    return pair;
+}
+
+void Verifier::changeStatus(bool isVerified)
+{
+    kDebug(5001) << "Verified:" << isVerified;
+    m_status = isVerified ? Verified : NotVerified;
+    emit verified(isVerified);
+}
+
+void Verifier::verifyThreaded()
+{
+    QPair<QString, QString> pair = checksum();
+    m_thread.verifiy(pair.first, pair.second, m_dest);
 }
 
 QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
