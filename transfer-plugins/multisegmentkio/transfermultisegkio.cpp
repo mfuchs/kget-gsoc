@@ -55,6 +55,7 @@ void TransferMultiSegKio::init()
         connect(m_dataSourceFactory, SIGNAL(processedSize(KIO::filesize_t)), this, SLOT(slotProcessedSize(KIO::filesize_t)));
         connect(m_dataSourceFactory, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
         connect(m_dataSourceFactory, SIGNAL(totalSize(KIO::filesize_t)), this, SLOT(slotTotalSize(KIO::filesize_t)));
+        connect(m_dataSourceFactory->verifier(), SIGNAL(verified(bool)), this, SLOT(slotVerified(bool)));
 
         m_dataSourceFactory->addMirror(m_source, MultiSegKioSettings::segments());
     }
@@ -204,18 +205,17 @@ void TransferMultiSegKio::slotStatus(Job::Status status)
         QModelIndex statusIndex = m_fileModel->index(m_dest, FileItem::Status);
         m_fileModel->setData(statusIndex, status);
     }
-
-    if ((status == Job::Finished) && (verifier()->status() == Verifier::NotVerified))
-    {
-        if (KMessageBox::warningYesNo(0,
-                                      i18n("The download could not be verfied. Do you want to repair it?"),
-                                      i18n("Verification failed.")) == KMessageBox::Yes)
-        {
-            repair();
-        }
-    }
 }
 
+void TransferMultiSegKio::slotVerified(bool isVerified)
+{
+    if (!isVerified && KMessageBox::warningYesNo(0,
+                                  i18n("The download could not be verfied. Do you want to repair it?"),
+                                  i18n("Verification failed.")) == KMessageBox::Yes)
+    {
+        repair();
+    }
+}
 
 void TransferMultiSegKio::slotPercent(ulong percent)
 {
