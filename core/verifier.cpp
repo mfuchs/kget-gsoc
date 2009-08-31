@@ -128,10 +128,13 @@ void VerificationThread::doVerify()
         const QString hash = Verifier::checksum(url, type);
         kDebug() << "Type:" << type << "Calculated checksum:" << hash << "Entered checksum:" << checksum;
         const bool fileVerified = (hash == checksum);
-        emit verified(type, fileVerified, url);
-        emit verified(fileVerified);
 
         mutex.lock();
+        if (!abort)
+        {
+            emit verified(type, fileVerified, url);
+            emit verified(fileVerified);
+        }
         run = m_files.count();
         mutex.unlock();
     }
@@ -166,6 +169,13 @@ void VerificationThread::doBrokenPieces()
         }
 
         const QStringList fileChecksums = Verifier::partialChecksums(url, type, length).checksums();
+
+        if (fileChecksums.size() != checksums.size())
+        {
+            kDebug(5001) << "Number of checksums differs!";
+            emit brokenPieces(broken);
+            return;
+        }
 
         for (int i = 0; i < checksums.size(); ++i)
         {
@@ -539,90 +549,16 @@ bool Verifier::isVerifyable() const
     return false;
 }
 
-bool Verifier::isVerifyable(int row) const
+bool Verifier::isVerifyable(const QModelIndex &index) const
 {
+    int row = -1;
+    if (index.isValid())
+    {
+        row = index.row();
+    }
     if (QFile::exists(m_dest.pathOrUrl()) && (row >= 0) && (row < m_model->rowCount()))
     {
         return true;
-    }
-    return false;
-}
-
-bool Verifier::verify()
-{
-    if (QFile::exists(m_dest.pathOrUrl()))
-    {
-        QFile file(m_dest.pathOrUrl());
-        if (!file.open(QIODevice::ReadOnly))
-        {
-            return false;
-        }
-
-        const QPair<QString, QString> pair = bestChecksum();
-        if (pair.first.isEmpty() || pair.second.isEmpty())
-        {
-            return false;
-        }
-
-#ifdef HAVE_QCA2
-        QCA::Hash hash(pair.first);
-        hash.update(&file);
-        QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
-        file.close();
-        bool verified = (final == pair.second);
-        changeStatus(verified);
-        return verified;
-#endif //HAVE_QCA2
-
-        //use md5 provided by KMD5 as a fallback
-        if (pair.first == s_md5)
-        {
-            KMD5 hash;
-            hash.update(file);
-            bool verified = hash.verify(pair.second.toLatin1());
-            file.close();
-            changeStatus(verified);
-            return verified;
-        }
-        file.close();
-
-    }
-    return false;
-}
-
-bool Verifier::verify(int row)
-{
-    if (QFile::exists(m_dest.pathOrUrl()) && (row >= 0) && (row < m_model->rowCount()))
-    {
-        QFile file(m_dest.pathOrUrl());
-        if (!file.open(QIODevice::ReadOnly))
-        {
-            return false;
-        }
-
-        const QString type = m_model->index(row, VerificationModel::Type).data().toString();
-        const QString hashString = m_model->index(row, VerificationModel::Checksum).data().toString();
-        if (!type.isEmpty() && !hashString.isEmpty())
-        {
-#ifdef HAVE_QCA2
-            QCA::Hash hash(type);
-            hash.update(&file);
-            QString final = QString(QCA::arrayToHex(hash.final().toByteArray()));
-            file.close();
-            bool verified = (final == hashString);
-            changeStatus(verified);
-            return verified;
-#endif //HAVE_QCA2
-            if (type == s_md5)
-            {
-                KMD5 hash;
-                hash.update(file);
-                bool verified = hash.verify(hashString.toLatin1());
-                file.close();
-                changeStatus(verified);
-                return verified;
-            }
-        }
     }
     return false;
 }
@@ -704,55 +640,33 @@ void Verifier::changeStatus(bool isVerified)
     emit verified(isVerified);
 }
 
-void Verifier::verifyThreaded()
+void Verifier::verify(const QModelIndex &index)
 {
-    QPair<QString, QString> pair = bestChecksum();
-    m_thread.verifiy(pair.first, pair.second, m_dest);
-}
-
-QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
-{
-    QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > broken;
-
-    if (QFile::exists(m_dest.pathOrUrl()))
+    int row = -1;
+    if (index.isValid())
     {
-        QFile file(m_dest.pathOrUrl());
-        if (!file.open(QIODevice::ReadOnly))
-        {
-            return broken;
-        }
-
-        QPair<QString, PartialChecksums*> pair = bestPartialChecksums();
-        const QString type = pair.first;
-        if (type.isEmpty() || !pair.second)
-        {
-            return broken;
-        }
-
-        PartialChecksums *partialChecksums = m_partialSums[type];
-        QList<QString> checksums = partialChecksums->checksums();
-        const KIO::filesize_t length = partialChecksums->length();
-        const KIO::filesize_t fileSize = file.size();
-
-        if (!length || !fileSize)
-        {
-            return broken;
-        }
-
-        for (int i = 0; i < checksums.size(); ++i)
-        {
-            const QString fileChecksum = calculatePartialChecksum(&file, type, length * i, length, fileSize);
-            if (fileChecksum != checksums.at(i))
-            {
-                broken.append(QPair<KIO::fileoffset_t, KIO::filesize_t>(length * i, length));
-            }
-        }
+        row = index.row();
     }
 
-    return broken;
+    QString type;
+    QString checksum;
+
+    if (row == -1)
+    {
+        QPair<QString, QString> pair = bestChecksum();
+        type = pair.first;
+        checksum = pair.second;
+    }
+    else if ((row >= 0) && (row < m_model->rowCount()))
+    {
+        type = m_model->index(row, VerificationModel::Type).data().toString();
+        checksum = m_model->index(row, VerificationModel::Checksum).data().toString();
+    }
+
+    m_thread.verifiy(type, checksum, m_dest);
 }
 
-void Verifier::brokenPiecesThreaded() const
+void Verifier::brokenPieces() const
 {
     QPair<QString, PartialChecksums*> pair = bestPartialChecksums();
     QList<QString> checksums;

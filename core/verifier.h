@@ -193,7 +193,7 @@ class KGET_EXPORT Verifier : public QObject
         };
 
         KUrl destination() const {return m_dest;}
-        void setDestination(const KUrl &destination) {m_dest = destination;}
+        void setDestination(const KUrl &destination) {m_dest = destination;}//TODO handle the case when m_thread is working, while the file gets moved
 
         VerificationStatus status() const {return m_status;}
 
@@ -239,47 +239,25 @@ class KGET_EXPORT Verifier : public QObject
         /**
          * Convenience function if only a row of the model should be checked
          * @note only call verify() when this function returns true
-         * @param row the row in the model of the checksum//TODO use a modelindex instead!
+         * @param row the row in the model of the checksum
          * @return true if the downloaded file exists and a supported checksum is set
          */
-        bool isVerifyable(int row) const;
-
-        /**
-         * Verify the downloaded file. This function tries to use the best (most secure)
-         * set checksums, deprecated ones like MD4 or MD5 are ignored if possible
-         * @note only call this function when isVerifiyable() returns true
-         * @return true if the transfer could be verified
-         */
-        bool verify();
-
-        /**
-         * Convenience function if only a row of the model should be checked
-         * Verify the downloaded file. This function uses the checksum of selected
-         * row for verification
-         * @note only call this function when isVerifiyable() returns true
-         * @return true if the transfer could be verified
-         */
-        bool verify(int row);
+        bool isVerifyable(const QModelIndex &index) const;
 
         /**
          * Call this method if you want to verify() in its own thread, then signals with
          * the result are emitted
+         * @param row of the model should be checked, if not defined the "best" checksum
+         * available will be used
          */
-        void verifyThreaded();
+        void verify(const QModelIndex &index = QModelIndex());
 
         /**
          * Call this method after calling verify() with a negative result, it will
-         * return a list of the broken pieces, if PartialChecksums were defined
-         * @return fileoffset_t is the offset of the piece, filesize_t the size of the
-         * piece, the last piece might have a larger size than it really is
+         * emit a list of the broken pieces, if PartialChecksums were defined,
+         * otherwise and in case of any error an empty list will be emitted
          */
-        QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces() const;
-
-        /**
-         * Call this method after calling verify() with a negative result, it will
-         * emit a list of the broken pieces, if PartialChecksums were defined
-         */
-        void brokenPiecesThreaded() const;
+        void brokenPieces() const;
 
         /**
          * Add partial checksums that can be used as repairinformation
