@@ -33,8 +33,7 @@ TransferKio::TransferKio(TransferGroup * parent, TransferFactory * factory,
     Transfer(parent, factory, scheduler, source, dest, e),
     m_copyjob(0),
     m_movingFile(false),
-    m_verifier(0),
-    m_broken(false)
+    m_verifier(0)
 {
 
 }
@@ -185,16 +184,9 @@ void TransferKio::slotResult( KJob * kioJob )
     // when slotResult gets called, the m_copyjob has already been deleted!
     m_copyjob=0;
 
-    if ((status() == Job::Finished) && verifier()->isVerifyable())
+    if ((status() == Job::Finished) && m_verifier)
     {
-        if (!verifier()->verify() &&
-            (KMessageBox::warningYesNo(0,
-                                       i18n("The download could not be verfied. Do you want to repair it?"),
-                                       i18n("Verification failed.")) == KMessageBox::Yes))
-        {
-            m_broken = true;
-            repair();
-        }
+        m_verifier->verify();
     }
     setTransferChange(Tc_Status, true);
 }
@@ -260,11 +252,21 @@ void TransferKio::slotSpeed( KJob * kioJob, unsigned long bytes_per_second )
     setTransferChange(Tc_DownloadSpeed, true);
 }
 
+void TransferKio::slotVerified(bool isVerified)
+{
+    if (!isVerified && KMessageBox::warningYesNo(0,
+                    i18n("The download (%1) could not be verfied. Do you want to repair it?", m_dest.fileName()),
+                    i18n("Verification failed.")) == KMessageBox::Yes)
+    {
+        repair();
+    }
+}
+
 bool TransferKio::repair(const KUrl &file)
 {
     Q_UNUSED(file)
 
-    if (m_broken || (m_verifier->isVerifyable() && !m_verifier->verify()))
+    if (verifier()->status() == Verifier::NotVerified)
     {
         m_downloadedSize = 0;
         m_percent = 0;
@@ -290,6 +292,7 @@ Verifier *TransferKio::verifier(const KUrl &file)
     if (!m_verifier)
     {
         m_verifier = new Verifier(m_dest);
+        connect(m_verifier, SIGNAL(verified(bool)), this, SLOT(slotVerified(bool)));
     }
 
     return m_verifier;

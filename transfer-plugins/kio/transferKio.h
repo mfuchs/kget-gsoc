@@ -67,10 +67,10 @@ class TransferKio : public QObject, public Transfer
         void slotProcessedSize( KJob * kioJob, qulonglong size );
         void slotSpeed( KJob * kioJob, unsigned long bytes_per_second );
         void newDestResult(KJob *result);
+        void slotVerified(bool isVerified);
 
     private:
         Verifier *m_verifier;
-        bool m_broken;
 };
 
 #endif
