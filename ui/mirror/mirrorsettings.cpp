@@ -50,6 +50,7 @@ void MirrorAddDlg::init()
     if (m_countryModel)
     {
         ui.location->setModel(m_countryModel);
+        ui.location->setCurrentIndex(-1);
     }
 
     ui.successLabel->hide();
