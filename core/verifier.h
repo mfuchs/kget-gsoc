@@ -51,6 +51,19 @@ class VerificationThread : public QThread
 
         void verifiy(const QString &type, const QString &checksum, const KUrl &file);
 
+        void findBrokenPieces(const QString &type, const QList<QString> checksums, KIO::filesize_t length, const KUrl &file);
+
+    private:
+        enum WorkType
+        {
+            Nothing,
+            Verify,
+            BrokenPieces
+        };
+
+        void doVerify();
+        void doBrokenPieces();
+
     signals:
         /**
          * Emitted when the verification of a file finishes, connect to this signal
@@ -61,6 +74,8 @@ class VerificationThread : public QThread
 
         void verified(const QString &type, bool verified, const KUrl &file);
 
+        void brokenPieces(QList<QPair<KIO::fileoffset_t, KIO::filesize_t> >);
+
     protected:
         void run();
 
@@ -70,6 +85,8 @@ class VerificationThread : public QThread
         QStringList m_types;
         QStringList m_checksums;
         QList<KUrl> m_files;
+        KIO::filesize_t m_length;
+        WorkType m_type;
 };
 
 class KGET_EXPORT VerificationDelegate : public QStyledItemDelegate
@@ -208,10 +225,10 @@ class KGET_EXPORT Verifier : public QObject
 
         /**
          * Create partial checksums of type for file dest
-         * @note the length of the partial checksum is not less than 512 kb
+         * @note the length of the partial checksum (if not defined = 0) is not less than 512 kb
          * and there won't be more partial checksums than 101
          */
-        static PartialChecksums partialChecksums(const KUrl &dest, const QString &type);
+        static PartialChecksums partialChecksums(const KUrl &dest, const QString &type, KIO::filesize_t length = 0);
 
         /**
          * @note only call verify() when this function returns true
@@ -259,6 +276,12 @@ class KGET_EXPORT Verifier : public QObject
         QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces() const;
 
         /**
+         * Call this method after calling verify() with a negative result, it will
+         * emit a list of the broken pieces, if PartialChecksums were defined
+         */
+        void brokenPiecesThreaded() const;
+
+        /**
          * Add partial checksums that can be used as repairinformation
          * @note only one checksum per type can be added (one MD5, one SHA1 etc.),
          * the newer overwrites the older and a checksum can only be added if it is
@@ -275,9 +298,14 @@ class KGET_EXPORT Verifier : public QObject
         KIO::filesize_t partialChunkLength() const;
 
         /**
-         * Returns the best stored checksum-type with the checksum
+         * Returns the "best" (strongest) stored checksum-type with the checksum
          */
-        QPair<QString, QString> checksum() const;
+        QPair<QString, QString> bestChecksum() const;
+
+        /**
+         * Returns the "best" (strongest) stored partial checksum-type with the checksum
+         */
+        QPair<QString, PartialChecksums*> bestPartialChecksums() const;
 
         /**
          * @return the model that stores the hash-types and checksums
@@ -290,9 +318,13 @@ class KGET_EXPORT Verifier : public QObject
     signals:
         /**
          * Emitted when the verification of a file finishes
-         * @NOTE only the threaded method emits this signal
          */
         void verified(bool verified);
+
+        /**
+         * Emitted when brokenPiecesThreaded finishes, the list can be empty
+         */
+        void brokenPieces(QList<QPair<KIO::fileoffset_t, KIO::filesize_t> >);
 
     private slots:
         void changeStatus(bool verified);
@@ -307,7 +339,7 @@ class KGET_EXPORT Verifier : public QObject
 
         QHash<QString, PartialChecksums*> m_partialSums;
 
-        VerificationThread m_thread;
+        mutable VerificationThread m_thread;
 
         static const QStringList SUPPORTED;
         static const int DIGGESTLENGTH[];

@@ -27,7 +27,7 @@
 #include <KDebug>
 #include <KLocale>
 #include <KLineEdit>
-
+//TODO use mutable to make some methods const?
 const QStringList Verifier::SUPPORTED = (QStringList() << "sha512" << "sha384" << "sha256" << "ripmed160" << "sha1" << "md5" << "md4");
 const int Verifier::DIGGESTLENGTH[] = {128, 96, 64, 40, 40, 32, 32};
 const int Verifier::MD5LENGTH = 32;
@@ -41,7 +41,9 @@ static const QString s_md5 = QString("md5");
 
 VerificationThread::VerificationThread(QObject *parent)
   : QThread(parent),
-    abort(false)
+    abort(false),
+    m_length(0),
+    m_type(Nothing)
 {
 }
 
@@ -60,6 +62,24 @@ void VerificationThread::verifiy(const QString &type, const QString &checksum, c
     m_types.append(type);
     m_checksums.append(checksum);
     m_files.append(file);
+    m_type = Verify;
+
+    if (!isRunning())
+    {
+        start();
+    }
+}
+
+void VerificationThread::findBrokenPieces(const QString &type, const QList<QString> checksums, KIO::filesize_t length, const KUrl &file)
+{
+    QMutexLocker locker(&mutex);
+    m_types.clear();
+    m_types.append(type);
+    m_checksums = checksums;
+    m_files.clear();
+    m_files.append(file);
+    m_length = length;
+    m_type = BrokenPieces;
 
     if (!isRunning())
     {
@@ -69,10 +89,26 @@ void VerificationThread::verifiy(const QString &type, const QString &checksum, c
 
 void VerificationThread::run()
 {
+    if (m_type == Nothing)
+    {
+        return;
+    }
+
+    if (m_type == Verify)
+    {
+        doVerify();
+    }
+    else if (m_type == BrokenPieces)
+    {
+        doBrokenPieces();
+    }
+}
+
+void VerificationThread::doVerify()
+{
     mutex.lock();
     bool run = m_files.count();
     mutex.unlock();
-
     while (run && !abort)
     {
         mutex.lock();
@@ -99,6 +135,50 @@ void VerificationThread::run()
         run = m_files.count();
         mutex.unlock();
     }
+}
+
+void VerificationThread::doBrokenPieces()
+{
+    QMutexLocker locker(&mutex);
+    //TODO add bool to static, to stop it?
+    const QString type = m_types.takeFirst();
+    const QStringList checksums = m_checksums;
+    m_checksums.clear();
+    const KUrl url = m_files.takeFirst();
+    const KIO::filesize_t length = m_length;
+
+    QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > broken;
+
+    if (QFile::exists(url.pathOrUrl()))
+    {
+        QFile file(url.pathOrUrl());
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            emit brokenPieces(broken);
+            return;
+        }
+
+        const KIO::filesize_t fileSize = file.size();
+        if (!length || !fileSize)
+        {
+            emit brokenPieces(broken);
+            return;
+        }
+
+        const QStringList fileChecksums = Verifier::partialChecksums(url, type, length).checksums();
+
+        for (int i = 0; i < checksums.size(); ++i)
+        {
+            if (fileChecksums.at(i) != checksums.at(i))
+            {
+                const int brokenStart = length * i;
+                kDebug(5001) << url << "broken segment" << i << "start" << brokenStart << "length" << length;
+                broken.append(QPair<KIO::fileoffset_t, KIO::filesize_t>(brokenStart, length));
+            }
+        }
+    }
+
+    emit brokenPieces(broken);
 }
 
 VerificationDelegate::VerificationDelegate(QObject *parent)
@@ -376,8 +456,13 @@ Verifier::Verifier(const KUrl &dest)
   : m_dest(dest),
     m_status(NoResult)
 {
+    qRegisterMetaType<KIO::filesize_t>("KIO::filesize_t");
+    qRegisterMetaType<KIO::fileoffset_t>("KIO::fileoffset_t");
+    qRegisterMetaType<QList<QPair<KIO::fileoffset_t,KIO::filesize_t> > >("QList<QPair<KIO::fileoffset_t,KIO::filesize_t> >");
+
     m_model = new VerificationModel();
     connect(&m_thread, SIGNAL(verified(bool)), this, SLOT(changeStatus(bool)));
+    connect(&m_thread, SIGNAL(brokenPieces(QList<QPair<KIO::fileoffset_t,KIO::filesize_t> >)), this, SIGNAL(brokenPieces(QList<QPair<KIO::fileoffset_t,KIO::filesize_t> >)));
 }
 
 Verifier::~Verifier()
@@ -473,7 +558,7 @@ bool Verifier::verify()
             return false;
         }
 
-        const QPair<QString, QString> pair = checksum();
+        const QPair<QString, QString> pair = bestChecksum();
         if (pair.first.isEmpty() || pair.second.isEmpty())
         {
             return false;
@@ -542,7 +627,7 @@ bool Verifier::verify(int row)
     return false;
 }
 
-QPair<QString, QString> Verifier::checksum() const
+QPair<QString, QString> Verifier::bestChecksum() const
 {
     QPair<QString, QString> pair;
 
@@ -582,6 +667,36 @@ QPair<QString, QString> Verifier::checksum() const
     return pair;
 }
 
+QPair<QString, PartialChecksums*> Verifier::bestPartialChecksums() const
+{
+    QPair<QString, PartialChecksums*> pair;
+    QString type;
+    PartialChecksums *checksum = 0;
+
+    const QStringList supported = supportedVerficationTypes();
+    #ifdef HAVE_QCA2
+    for (int i = 0; i < supported.size(); ++i)
+    {
+        if (m_partialSums.contains(supported.at(i)))
+        {
+            type = supported.at(i);
+        }
+    }
+    #else //NO QCA2
+    if (m_partialSums.contains(s_md5))
+    {
+        type = s_md5;
+    }
+    #endif //HAVE_QCA2
+
+    if (m_partialSums.contains(type))
+    {
+        checksum =  m_partialSums[type];
+    }
+
+    return QPair<QString, PartialChecksums*>(type, checksum);
+}
+
 void Verifier::changeStatus(bool isVerified)
 {
     kDebug(5001) << "Verified:" << isVerified;
@@ -591,7 +706,7 @@ void Verifier::changeStatus(bool isVerified)
 
 void Verifier::verifyThreaded()
 {
-    QPair<QString, QString> pair = checksum();
+    QPair<QString, QString> pair = bestChecksum();
     m_thread.verifiy(pair.first, pair.second, m_dest);
 }
 
@@ -607,24 +722,9 @@ QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
             return broken;
         }
 
-        QString type;
-        const QStringList supported = supportedVerficationTypes();
-#ifdef HAVE_QCA2
-        for (int i = 0; i < supported.size(); ++i)
-        {
-            if (m_partialSums.contains(supported.at(i)))
-            {
-                type = supported.at(i);
-            }
-        }
-#else //NO QCA2
-        if (m_partialSums.contains(s_md5))
-        {
-            type = s_md5;
-        }
-#endif //HAVE_QCA2
-
-        if (type.isEmpty())
+        QPair<QString, PartialChecksums*> pair = bestPartialChecksums();
+        const QString type = pair.first;
+        if (type.isEmpty() || !pair.second)
         {
             return broken;
         }
@@ -650,7 +750,19 @@ QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > Verifier::brokenPieces() const
     }
 
     return broken;
+}
 
+void Verifier::brokenPiecesThreaded() const
+{
+    QPair<QString, PartialChecksums*> pair = bestPartialChecksums();
+    QList<QString> checksums;
+    KIO::filesize_t length = 0;
+    if (pair.second)
+    {
+        checksums = pair.second->checksums();
+        length = pair.second->length();
+    }
+    m_thread.findBrokenPieces(pair.first, checksums, length, m_dest);
 }
 
 QString Verifier::checksum(const KUrl &dest, const QString &type)
@@ -686,7 +798,7 @@ QString Verifier::checksum(const KUrl &dest, const QString &type)
     return QString();
 }
 
-PartialChecksums Verifier::partialChecksums(const KUrl &dest, const QString &type)
+PartialChecksums Verifier::partialChecksums(const KUrl &dest, const QString &type, KIO::filesize_t length)
 {
     QList<QString> checksums;
 
@@ -708,16 +820,26 @@ PartialChecksums Verifier::partialChecksums(const KUrl &dest, const QString &typ
         return PartialChecksums();
     }
 
-    int numPieces = fileSize / PARTSIZE;
-    KIO::fileoffset_t length = fileSize;
-    if (numPieces > 100)
+    int numPieces = 0;
+
+    //the piece length has been defined
+    if (length)
     {
-        numPieces = 100;
-        length = fileSize / numPieces;
+        numPieces = fileSize / length;
     }
-    else if (numPieces)
+    else
     {
-        length = PARTSIZE;
+        numPieces = fileSize / PARTSIZE;
+        length = fileSize;
+        if (numPieces > 100)
+        {
+            numPieces = 100;
+            length = fileSize / numPieces;
+        }
+        else if (numPieces)
+        {
+            length = PARTSIZE;
+        }
     }
 
     //there is a rest, so increase numPieces by one
