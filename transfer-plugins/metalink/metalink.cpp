@@ -482,6 +482,8 @@ void Metalink::slotStatus(Job::Status status)
 
 void Metalink::slotVerified(bool isVerified)
 {
+    Q_UNUSED(isVerified)
+
     if (status() == Job::Finished)
     {
         //see if some files are NotVerified
@@ -581,6 +583,7 @@ void Metalink::load(const QDomElement *element)
             connect(file, SIGNAL(speed(ulong)), this, SLOT(speedChanged()));
             connect(file, SIGNAL(statusChanged(Job::Status)), this, SLOT(slotStatus(Job::Status)));
             m_dataSourceFactory[file->dest()] = file;
+            connect(file->verifier(), SIGNAL(verified(bool)), this, SLOT(slotVerified(bool)));
 
             //start the DataSourceFactories that were Started when KGet was closed
             if (file->status() == Job::Running)
