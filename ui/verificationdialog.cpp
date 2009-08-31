@@ -95,6 +95,7 @@ VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfe
     if (m_verifier)
     {
         m_model = m_verifier->model();
+        connect(m_verifier, SIGNAL(verified(bool)), this, SLOT(slotVerified(bool)));
     }
 
     setCaption(i18n("Transfer Verification for %1", m_file.fileName()));
@@ -104,6 +105,7 @@ VerificationDialog::VerificationDialog(QWidget *parent, TransferHandler *transfe
     setMainWidget(widget);
     ui.add->setGuiItem(KStandardGuiItem::add());
     ui.remove->setGuiItem(KStandardGuiItem::remove());
+    ui.verifying->hide();
 
     if (m_model)
     {
@@ -136,7 +138,7 @@ void VerificationDialog::updateButtons()
         {
             foreach (const QModelIndex &index, indexes)
             {
-                verifyEnabled = m_verifier->isVerifyable(index.row());
+                verifyEnabled = m_verifier->isVerifyable(index);
                 if (!verifyEnabled)
                 {
                     break;
@@ -165,21 +167,24 @@ void VerificationDialog::addPressed()
 
 void VerificationDialog::verifyPressed()
 {
-    const QModelIndexList indexes = ui.usedHashes->selectionModel()->selectedRows();
-    bool verified = false;
-    foreach (const QModelIndex &index, indexes)
+    const QModelIndex index = ui.usedHashes->selectionModel()->selectedRows().first();
+    if (index.isValid())
     {
-        verified = m_verifier->verify(index.row());
-        if (!verified)
-        {
-            break;
-        }
+         m_verifier->verify(index);
+         ui.progressBar->setMaximum(0);
+         ui.verifying->show();
     }
+}
+
+void VerificationDialog::slotVerified(bool verified)
+{
+    ui.progressBar->setMaximum(1);
+    ui.verifying->hide();
 
     if (verified)
     {
         KMessageBox::information(this,
-                                 i18n("The downloaded file was successfully verified."),
+                                 i18n("%1 was successfully verified.", m_file.fileName()),
                                  i18n("Verification successful"));
     }
 }
