@@ -237,6 +237,8 @@ class KGET_EXPORT DataSourceFactory : public QObject
         void startMove();
         void newDestResult(KJob *job);
 
+        void slotRepair(const QList<QPair<KIO::fileoffset_t,KIO::filesize_t> > &brokenPieces);
+
     private:
         /**
         * Add a mirror that can be used for downloading

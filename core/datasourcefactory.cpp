@@ -814,20 +814,26 @@ void DataSourceFactory::repair()
     }
 
     m_finished = false;
-    QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > brokenPieces = verifier()->brokenPieces();
+    verifier()->brokenPiecesThreaded();
+}
+
+void DataSourceFactory::slotRepair(const QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > &brokenPieces)
+{
     if (brokenPieces.isEmpty())
     {
+        kDebug(5001) << "Redownload everything";
         m_startedChunks->clear();
         m_finishedChunks->clear();
     }
     else
     {
+        kDebug(5001) << "Redownload broken pieces";
         QList<QPair<KIO::fileoffset_t, KIO::filesize_t> >::const_iterator it;
         QList<QPair<KIO::fileoffset_t, KIO::filesize_t> >::const_iterator itEnd = brokenPieces.constEnd();
         for (it = brokenPieces.constBegin(); it != itEnd; ++it)
         {
-            quint32 startSegment = (*it).first / m_segSize;
-            quint32 endSegment = ceil((*it).second / static_cast<double>(m_segSize)) - 1 + startSegment;
+            const quint32 startSegment = (*it).first / m_segSize;
+            const quint32 endSegment = ceil((*it).second / static_cast<double>(m_segSize)) - 1 + startSegment;
             for (quint32 i = startSegment; i <= endSegment; ++i)
             {
                 m_startedChunks->set(i, false);
@@ -837,7 +843,7 @@ void DataSourceFactory::repair()
     }
 
     //remove all current mirrors and readd the first unused mirror
-    QList<KUrl> mirrors = m_sources.keys();//TODO only remove the mirrors of the broken segments?! --> for that m_assignedChunks would need to be saved was well
+    const QList<KUrl> mirrors = m_sources.keys();//TODO only remove the mirrors of the broken segments?! --> for that m_assignedChunks would need to be saved was well
     //TODO maybe store the assigned segments alongside the used mirrors in form of a list --> "1,3,2.."? --> wouldn't that make transfers.kgt very large?//TODO is assigned segments a good idea at all, memory wise?
     foreach (const KUrl &mirror, mirrors)
     {
@@ -886,6 +892,7 @@ void DataSourceFactory::load(const QDomElement *element)
     if (e.hasAttribute("doDownload"))
     {
         m_doDownload = QVariant(e.attribute("doDownload")).toBool();
+        kDebug() << "****do: " << m_doDownload;
     }
     if (e.hasAttribute("maxMirrorsUsed"))
     {
@@ -1168,6 +1175,7 @@ Verifier *DataSourceFactory::verifier()
     if (!m_verifier)
     {
         m_verifier = new Verifier(m_dest);
+        connect(m_verifier, SIGNAL(brokenPieces(QList<QPair<KIO::fileoffset_t,KIO::filesize_t> >)), this, SLOT(slotRepair(QList<QPair<KIO::fileoffset_t,KIO::filesize_t> >)));
     }
 
     return m_verifier;
