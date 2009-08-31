@@ -33,7 +33,7 @@ Segment::~Segment()
 {
     if (m_getJob)
     {
-        m_getJob->kill(KJob::Quietly);
+        m_getJob->putOnHold();
     }
 }
 
@@ -101,7 +101,9 @@ bool Segment::stopTransfer()
 
         if (m_getJob)
         {
-            m_getJob->kill( KJob::EmitResult );
+            m_getJob->putOnHold();
+            m_buffer.clear();
+            m_getJob = 0;
         }
         return true;
     }
@@ -180,7 +182,7 @@ void Segment::slotData(KIO::Job *, const QByteArray& _data)
      this hack try to avoid too much cpu usage. it seems to be due KIO::Filejob
      so remove it when it works property
     */
-    if (m_buffer.size() > 16 * 1024)
+    if (m_buffer.size() > 160 * 1024)
         writeBuffer();
     }
 }
@@ -209,7 +211,7 @@ bool Segment::writeBuffer()
         kDebug(5001) << "Closing transfer ...";
         if (m_getJob)
         {
-            m_getJob->kill(KJob::Quietly);
+            m_getJob->putOnHold();
             m_getJob = 0;
         }
         emit finishedSegment(this, m_segmentNum);
