@@ -814,7 +814,7 @@ void DataSourceFactory::repair()
     }
 
     m_finished = false;
-    verifier()->brokenPiecesThreaded();
+    verifier()->brokenPieces();
 }
 
 void DataSourceFactory::slotRepair(const QList<QPair<KIO::fileoffset_t, KIO::filesize_t> > &brokenPieces)
@@ -997,7 +997,7 @@ void DataSourceFactory::changeStatus(Job::Status status, bool loaded)
 
             if (!loaded && verifier()->isVerifyable())
             {
-                verifier()->verifyThreaded();
+                verifier()->verify();
             }
             break;
         default:
