@@ -171,7 +171,7 @@ void MultiSegKioDataSource::killInitJob()
 {
     if (m_getInitJob)
     {
-        m_getInitJob->putOnHold();
+        m_getInitJob->kill(KJob::Quietly);
         m_getInitJob = 0;
     }
 }

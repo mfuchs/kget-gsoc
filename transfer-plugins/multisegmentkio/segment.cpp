@@ -33,7 +33,7 @@ Segment::~Segment()
 {
     if (m_getJob)
     {
-        m_getJob->putOnHold();
+        m_getJob->kill(KJob::Quietly);
     }
 }
 
@@ -101,9 +101,7 @@ bool Segment::stopTransfer()
 
         if (m_getJob)
         {
-            m_getJob->putOnHold();
-            m_buffer.clear();
-            m_getJob = 0;
+            m_getJob->kill( KJob::EmitResult );
         }
         return true;
     }
@@ -211,7 +209,7 @@ bool Segment::writeBuffer()
         kDebug(5001) << "Closing transfer ...";
         if (m_getJob)
         {
-            m_getJob->putOnHold();
+            m_getJob->kill(KJob::Quietly);
             m_getJob = 0;
         }
         emit finishedSegment(this, m_segmentNum);
