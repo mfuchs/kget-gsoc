@@ -210,7 +210,7 @@ void TransferMultiSegKio::slotStatus(Job::Status status)
 void TransferMultiSegKio::slotVerified(bool isVerified)
 {
     if (!isVerified && KMessageBox::warningYesNo(0,
-                                  i18n("The download could not be verfied. Do you want to repair it?"),
+                                  i18n("The download (%1) could not be verfied. Do you want to repair it?", m_dest.fileName()),
                                   i18n("Verification failed.")) == KMessageBox::Yes)
     {
         repair();
